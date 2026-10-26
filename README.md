@@ -37,7 +37,8 @@ reports is `ReportService`. All timestamps are stored in UTC; conversion happens
 
 - PostgreSQL schema managed entirely by Alembic, including stores, sources,
   observations, and the future prediction cache.
-- Idempotent store/source seeding from `data/stores_seed.csv`.
+- Idempotent store/source seeding from `data/stores_seed.csv` (106 Southwest Florida
+  stores) plus a separate example set for the simulator.
 - `/report` with validation, hashed reporter IDs, and transaction-safe 30-minute
   deduplication.
 - `/stores` and `/recent` with store autocomplete and New York time display.
@@ -126,9 +127,14 @@ anonymously instead of saying nothing was posted publicly.
 
 ## Simulator
 
-The simulator expects the six bundled `EXAMPLE ...` stores to be active. It refuses
-to run if its planted store names are missing, so replacing the seed file with real
-stores cannot silently mix synthetic rows into them.
+The simulator expects the six `EXAMPLE ...` stores from
+`data/stores_example.csv` to be active. It refuses to run if its planted store names
+are missing, so the real store seed cannot silently mix synthetic rows into them. Use
+a development database and seed the example file first:
+
+```bash
+python scripts/seed_stores.py --csv data/stores_example.csv
+```
 
 ```bash
 python scripts/simulate.py --weeks 12 --seed 42
@@ -154,32 +160,63 @@ observations, false-negative empty-shelf reports during restock windows, and
 background empty-shelf reports. `--purge` deletes observations whose source is
 `simulator`; it leaves user reports, stores, sources, and every other table intact.
 
-## Store candidate export (optional)
+## Store data
+
+`data/stores_seed.csv` is the reviewed Southwest Florida store list: 106 stores
+across Cape Coral, Fort Myers, Naples, Bonita Springs, Estero, and North Fort Myers.
+It was normalized from the operator-supplied `data/SWFL_Retail_Locations.xlsx`
+workbook (store name and full address only). Rows are validated for required fields,
+known retailers, IANA timezone, duplicate `(retailer, name, address)` identities,
+and paired coordinates before the database is opened.
+
+The supplied workbook has no coordinates, so `lat` and `lng` are blank for every
+row. The schema allows both coordinates to be absent, but never just one. Geocode
+stores before enabling a radius feature; do not fill them with guessed values.
+
+```bash
+python scripts/seed_stores.py
+```
+
+The seed is idempotent and uses `(retailer, name, address)` as the natural key.
+`data/stores_example.csv` keeps the six clearly fake `EXAMPLE ...` stores for
+development and simulator work. Seed it only in a development database:
+
+```bash
+python scripts/seed_stores.py --csv data/stores_example.csv
+```
+
+The supplied list is a business-name/address list, not a live availability feed.
+Store openings, closings, and whether a location carries Pokemon TCG are not
+independently verified. Best Buy is not present in the supplied list, so it was not
+added.
+
+### Optional OSM candidate export (legacy)
 
 ```bash
 python scripts/fetch_osm_stores.py
 ```
 
-This makes one Overpass API request for the ten supported brands inside a bounding
-box covering Cape Coral, Fort Myers, Bonita Springs, and Naples. It writes
-`data/stores_osm_candidates.csv` in the seed CSV format and never connects to the
-database. The command refuses to overwrite an existing file unless `--force` is
-passed.
+This legacy export makes one Overpass API request for the ten original supported
+brands inside a bounding box covering Cape Coral, Fort Myers, Bonita Springs, and
+Naples. It writes `data/stores_osm_candidates.csv` in the seed CSV format and never
+connects to the database. The command refuses to overwrite an existing file unless
+`--force` is passed.
 
 Review and edit every row before using it. Rows with no OSM street or city are kept
 so they are visible for review, but have blank fields until you fill them in. Then
-merge the reviewed rows into `data/stores_seed.csv` and run the normal seed command.
+merge reviewed rows into `data/stores_seed.csv` and run the normal seed command.
 `scripts/seed_stores.py` rejects duplicate `(retailer, name, address)` rows and
 prints created/updated totals.
 
-Store candidate data comes from OpenStreetMap, © OpenStreetMap contributors,
-available under the [Open Database License](https://www.openstreetmap.org/copyright).
-The export is deliberately manual: no OSM data is inserted without review.
+OSM candidate data comes from OpenStreetMap, © OpenStreetMap contributors, available
+under the [Open Database License](https://www.openstreetmap.org/copyright). This
+attribution applies only to rows exported by that script, not to the supplied SWFL
+list. No OSM data is inserted without review.
 
 ## Cleanup example data
 
-After the real store CSV is reviewed and seeded, remove the six demonstration
-stores and every simulator row:
+The default seed file now contains real stores. If a development database still has
+the six demonstration stores and simulator rows, remove them after seeding:
 
 ```bash
 python scripts/remove_example_data.py --yes
@@ -216,12 +253,18 @@ CI runs Ruff, mypy, Alembic, and pytest against PostgreSQL 16.
   so simultaneous identical submissions cannot both pass.
 - Seed upserts use `(retailer, name, address)` as the natural key. Duplicate rows
   are rejected before the database is opened, with line numbers in the error.
-- OSM store candidates are a one-time, single-request, read-only export for manual
-  review. The script never seeds the database, and OSM data is attributed under ODbL.
+- The primary store list is the operator-supplied SWFL workbook. It contains names
+  and addresses only, so store coordinates are optional and stored as a pair. Missing
+  coordinates stay null instead of being guessed from a ZIP code or city centroid.
+- GameStop is a native retailer enum value because the supplied list includes nine
+  GameStop locations. The enum migration adds it without rewriting existing rows.
+- OSM store candidates remain an optional, one-time, single-request, read-only export
+  for manual review. The script never seeds the database, and OSM data is attributed
+  under ODbL. It is not the source of the supplied SWFL list.
 - Example data cleanup is explicit (`--yes`), removes observations before stores,
   and also removes all `simulator`-source observations. It never removes sources or
   real user reports.
-- Store autocomplete loads the active store set (expected around 100) and ranks in
+- Store autocomplete loads the active store set (currently 106) and ranks in
   Python because matching spans the retailer, name, city, and address and prefix
   matches must sort first. It returns at most 25 choices with case-insensitive
   token matching and truncates each label to Discord's 100-character limit.
@@ -256,7 +299,8 @@ CI runs Ruff, mypy, Alembic, and pytest against PostgreSQL 16.
 - No moderation queue, data-retention job, or scheduled jobs yet.
 - Admin commands rely on Discord's default command permissions; a server administrator
   can override the default permission in Discord's integration settings.
-- The bundled seed CSV is still deliberately fake until the reviewed OSM candidates
-  replace it. No real store data was invented or committed.
+- The supplied store list is operator-provided and format-validated, not independently
+  verified for openings, closings, or Pokemon TCG inventory. It has no coordinates and
+  does not include Best Buy.
 - GitHub Actions has not run yet. Optionally configured feed/rate-limit/admin commands
   are tested locally but have not been exercised live until the bot is restarted.

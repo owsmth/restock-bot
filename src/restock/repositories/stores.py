@@ -14,8 +14,8 @@ class StoreWrite:
     name: str
     address: str
     city: str
-    lat: float
-    lng: float
+    lat: float | None
+    lng: float | None
     timezone: str
     restock_regime: RestockRegime = RestockRegime.UNKNOWN
     active: bool = True

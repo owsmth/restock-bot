@@ -28,6 +28,7 @@ class Retailer(StrEnum):
     SAMS_CLUB = "sams_club"
     COSTCO = "costco"
     BEST_BUY = "best_buy"
+    GAMESTOP = "gamestop"
     DOLLAR_GENERAL = "dollar_general"
     FAMILY_DOLLAR = "family_dollar"
     BARNES_NOBLE = "barnes_noble"
@@ -97,6 +98,10 @@ class Store(Base):
         UniqueConstraint("retailer", "name", "address", name="uq_stores_identity"),
         CheckConstraint("lat BETWEEN -90 AND 90", name="ck_stores_lat_range"),
         CheckConstraint("lng BETWEEN -180 AND 180", name="ck_stores_lng_range"),
+        CheckConstraint(
+            "(lat IS NULL) = (lng IS NULL)",
+            name="ck_stores_coordinates_pair",
+        ),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
@@ -104,8 +109,8 @@ class Store(Base):
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     address: Mapped[str] = mapped_column(String(300), nullable=False)
     city: Mapped[str] = mapped_column(String(100), nullable=False)
-    lat: Mapped[float] = mapped_column(Float, nullable=False)
-    lng: Mapped[float] = mapped_column(Float, nullable=False)
+    lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    lng: Mapped[float | None] = mapped_column(Float, nullable=True)
     timezone: Mapped[str] = mapped_column(
         String(64),
         nullable=False,

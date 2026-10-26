@@ -7,7 +7,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from restock.config import get_settings
 from restock.db.engine import create_db_engine
@@ -52,11 +59,25 @@ class StoreSeedRow(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     address: str = Field(min_length=1, max_length=300)
     city: str = Field(min_length=1, max_length=100)
-    lat: float = Field(ge=-90, le=90)
-    lng: float = Field(ge=-180, le=180)
+    lat: float | None = Field(default=None, ge=-90, le=90)
+    lng: float | None = Field(default=None, ge=-180, le=180)
     timezone: str = Field(min_length=1, max_length=64)
     restock_regime: RestockRegime = RestockRegime.UNKNOWN
     active: bool = True
+
+    @field_validator("lat", "lng", mode="before")
+    @classmethod
+    def validate_optional_coordinate(cls, value: object) -> object:
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        return value
+
+    @model_validator(mode="after")
+    def validate_coordinate_pair(self) -> StoreSeedRow:
+        if (self.lat is None) != (self.lng is None):
+            raise ValueError("lat and lng must both be set or both be blank")
+        return self
 
     @field_validator("timezone")
     @classmethod

@@ -1,7 +1,107 @@
 retailer,name,address,city,lat,lng,timezone,restock_regime,active
-target,EXAMPLE Target Cape Coral,1 Example Retail Way,Cape Coral,26.5629,-81.9495,America/New_York,scheduled,true
-walmart,EXAMPLE Walmart Fort Myers,2 Example Retail Way,Fort Myers,26.6406,-81.8723,America/New_York,random,true
-costco,EXAMPLE Costco Naples,3 Example Retail Way,Naples,26.1423,-81.7948,America/New_York,scheduled,true
-best_buy,EXAMPLE Best Buy Fort Myers,4 Example Retail Way,Fort Myers,26.6406,-81.8723,America/New_York,scheduled,true
-walgreens,EXAMPLE Walgreens Cape Coral,5 Example Retail Way,Cape Coral,26.5629,-81.9495,America/New_York,random,true
-sams_club,EXAMPLE Sams Club Naples,6 Example Retail Way,Naples,26.1423,-81.7948,America/New_York,unknown,true
+costco,"Costco Wholesale - 10088 Gulf Center Dr, Fort Myers",10088 Gulf Center Dr,Fort Myers,,,America/New_York,unknown,true
+costco,"Costco Wholesale - 6275 Naples Blvd, Naples",6275 Naples Blvd,Naples,,,America/New_York,unknown,true
+sams_club,"Sam's Club - 301 SW Pine Island Rd, Cape Coral",301 SW Pine Island Rd,Cape Coral,,,America/New_York,unknown,true
+sams_club,"Sam's Club - 5170 S Cleveland Ave, Fort Myers",5170 S Cleveland Ave,Fort Myers,,,America/New_York,unknown,true
+sams_club,"Sam's Club - 2550 Immokalee Rd, Naples",2550 Immokalee Rd,Naples,,,America/New_York,unknown,true
+barnes_noble,"Barnes & Noble - 23130 Fashion Dr, Estero",23130 Fashion Dr,Estero,,,America/New_York,unknown,true
+barnes_noble,"Barnes & Noble - 13751 S Tamiami Trl, Fort Myers",13751 S Tamiami Trl,Fort Myers,,,America/New_York,unknown,true
+barnes_noble,"Barnes & Noble - 5377 Tamiami Trl N, Naples",5377 Tamiami Trl N,Naples,,,America/New_York,unknown,true
+target,"Target - 1890 NE Pine Island Rd, Cape Coral",1890 NE Pine Island Rd,Cape Coral,,,America/New_York,unknown,true
+target,"Target - 8040 Mediterranean Dr, Estero",8040 Mediterranean Dr,Estero,,,America/New_York,unknown,true
+target,"Target - 13711 S Tamiami Trl, Fort Myers",13711 S Tamiami Trl,Fort Myers,,,America/New_York,unknown,true
+target,"Target - 15880 San Carlos Blvd Ste 101, Fort Myers",15880 San Carlos Blvd Ste 101,Fort Myers,,,America/New_York,unknown,true
+target,"Target - 9350 Dynasty Dr, Fort Myers",9350 Dynasty Dr,Fort Myers,,,America/New_York,unknown,true
+target,"Target - 2324 Pine Ridge Rd, Naples",2324 Pine Ridge Rd,Naples,,,America/New_York,unknown,true
+target,"Target - 2415 Tarpon Bay Blvd, Naples",2415 Tarpon Bay Blvd,Naples,,,America/New_York,unknown,true
+walmart,"Walmart Supercenter - 1619 Del Prado Blvd S, Cape Coral",1619 Del Prado Blvd S,Cape Coral,,,America/New_York,unknown,true
+walmart,"Walmart Supercenter - 2020 NE Pine Island Rd, Cape Coral",2020 NE Pine Island Rd,Cape Coral,,,America/New_York,unknown,true
+walmart,"Walmart Supercenter - 14821 S Cleveland Ave, Fort Myers",14821 S Cleveland Ave,Fort Myers,,,America/New_York,unknown,true
+walmart,"Walmart Supercenter - 4770 Colonial Blvd, Fort Myers",4770 Colonial Blvd,Fort Myers,,,America/New_York,unknown,true
+walmart,"Walmart Supercenter - 11225 Tamiami Trl N, Naples",11225 Tamiami Trl N,Naples,,,America/New_York,unknown,true
+walmart,"Walmart Supercenter - 5420 Juliet Blvd, Naples",5420 Juliet Blvd,Naples,,,America/New_York,unknown,true
+walmart,"Walmart Supercenter - 6788 Naples Blvd, Naples",6788 Naples Blvd,Naples,,,America/New_York,unknown,true
+walmart,"Walmart Supercenter - 9885 Collier Blvd, Naples",9885 Collier Blvd,Naples,,,America/New_York,unknown,true
+walmart,"Walmart Supercenter - 545 Pine Island Rd, North Fort Myers",545 Pine Island Rd,North Fort Myers,,,America/New_York,unknown,true
+walmart,"Walmart Neighborhood Market - 3920 Skyline Blvd, Cape Coral",3920 Skyline Blvd,Cape Coral,,,America/New_York,unknown,true
+walmart,"Walmart Neighborhood Market - 505 SW Pine Island Rd, Cape Coral",505 SW Pine Island Rd,Cape Coral,,,America/New_York,unknown,true
+walmart,"Walmart Neighborhood Market - 9131 College Pkwy, Fort Myers",9131 College Pkwy,Fort Myers,,,America/New_York,unknown,true
+walmart,"Walmart Neighborhood Market - 5010 Airport-Pulling Rd N, Naples",5010 Airport-Pulling Rd N,Naples,,,America/New_York,unknown,true
+gamestop,"GameStop - 1631 Del Prado Blvd S Ste 402, Cape Coral",1631 Del Prado Blvd S Ste 402,Cape Coral,,,America/New_York,unknown,true
+gamestop,"GameStop - 2384 Surfside Blvd Ste 109, Cape Coral",2384 Surfside Blvd Ste 109,Cape Coral,,,America/New_York,unknown,true
+gamestop,"GameStop - 10021 Gulf Center Dr Ste 220, Fort Myers",10021 Gulf Center Dr Ste 220,Fort Myers,,,America/New_York,unknown,true
+gamestop,"GameStop - 13711 S Tamiami Trl Ste 4, Fort Myers",13711 S Tamiami Trl Ste 4,Fort Myers,,,America/New_York,unknown,true
+gamestop,"GameStop - 4125 Cleveland Ave Ste 1495, Fort Myers",4125 Cleveland Ave Ste 1495,Fort Myers,,,America/New_York,unknown,true
+gamestop,"GameStop - 9390 Ben C Pratt/6 Mile Cypress Pkwy Ste 105, Fort Myers",9390 Ben C Pratt/6 Mile Cypress Pkwy Ste 105,Fort Myers,,,America/New_York,unknown,true
+gamestop,"GameStop - 1998 Tamiami Trl N, Naples",1998 Tamiami Trl N,Naples,,,America/New_York,unknown,true
+gamestop,"GameStop - 2275 Pine Ridge Rd Ste 103, Naples",2275 Pine Ridge Rd Ste 103,Naples,,,America/New_York,unknown,true
+gamestop,"GameStop - 9960 Business Cir Ste 4, Naples",9960 Business Cir Ste 4,Naples,,,America/New_York,unknown,true
+ace_hardware,"Ace Hardware - 9100 Bonita Beach Rd SE, Bonita Springs",9100 Bonita Beach Rd SE,Bonita Springs,,,America/New_York,unknown,true
+ace_hardware,"Ace Hardware - 1900 Skyline Blvd, Cape Coral",1900 Skyline Blvd,Cape Coral,,,America/New_York,unknown,true
+ace_hardware,"Ace Hardware - 3007 Chiquita Blvd S, Cape Coral",3007 Chiquita Blvd S,Cape Coral,,,America/New_York,unknown,true
+ace_hardware,"Ace Hardware - 12830 Metro Pkwy, Fort Myers",12830 Metro Pkwy,Fort Myers,,,America/New_York,unknown,true
+ace_hardware,"Ace Hardware - 18911 S Tamiami Trl, Fort Myers",18911 S Tamiami Trl,Fort Myers,,,America/New_York,unknown,true
+ace_hardware,"Ace Hardware - 9100 Daniels Pkwy, Fort Myers",9100 Daniels Pkwy,Fort Myers,,,America/New_York,unknown,true
+ace_hardware,"Ace Hardware - 11180 Tamiami Trl N, Naples",11180 Tamiami Trl N,Naples,,,America/New_York,unknown,true
+ace_hardware,"Ace Hardware - 1410 Pine Ridge Rd, Naples",1410 Pine Ridge Rd,Naples,,,America/New_York,unknown,true
+ace_hardware,"Ace Hardware - 4433 Tamiami Trl E, Naples",4433 Tamiami Trl E,Naples,,,America/New_York,unknown,true
+ace_hardware,"Ace Hardware - 115 W North Shore Ave, North Fort Myers",115 W North Shore Ave,North Fort Myers,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 11500 Bonita Beach Rd SE, Bonita Springs",11500 Bonita Beach Rd SE,Bonita Springs,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 24800 S Tamiami Trl, Bonita Springs",24800 S Tamiami Trl,Bonita Springs,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 27841 Crown Lake Blvd, Bonita Springs",27841 Crown Lake Blvd,Bonita Springs,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 1003 Santa Barbara Blvd, Cape Coral",1003 Santa Barbara Blvd,Cape Coral,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 1209 Del Prado Blvd S, Cape Coral",1209 Del Prado Blvd S,Cape Coral,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 1396 Pine Island Rd SW, Cape Coral",1396 Pine Island Rd SW,Cape Coral,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 1611 SE 47th Ter, Cape Coral",1611 SE 47th Ter,Cape Coral,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 737 Cape Coral Pkwy E, Cape Coral",737 Cape Coral Pkwy E,Cape Coral,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 11300 S Cleveland Ave, Fort Myers",11300 S Cleveland Ave,Fort Myers,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 13500 Meadow Rd, Fort Myers",13500 Meadow Rd,Fort Myers,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 14411 Palm Beach Blvd, Fort Myers",14411 Palm Beach Blvd,Fort Myers,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 15050 S Tamiami Trl, Fort Myers",15050 S Tamiami Trl,Fort Myers,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 4110 Cleveland Ave, Fort Myers",4110 Cleveland Ave,Fort Myers,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 7051 College Pkwy, Fort Myers",7051 College Pkwy,Fort Myers,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 2344 Immokalee Rd, Naples",2344 Immokalee Rd,Naples,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 2375 Vanderbilt Beach Rd, Naples",2375 Vanderbilt Beach Rd,Naples,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 294 9th St S, Naples",294 9th St S,Naples,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 5296 Tamiami Trl N, Naples",5296 Tamiami Trl N,Naples,,,America/New_York,unknown,true
+cvs,"CVS Pharmacy - 7385 Radio Rd, Naples",7385 Radio Rd,Naples,,,America/New_York,unknown,true
+walgreens,"Walgreens - 11494 Bonita Beach Rd SE, Bonita Springs",11494 Bonita Beach Rd SE,Bonita Springs,,,America/New_York,unknown,true
+walgreens,"Walgreens - 28100 S Tamiami Trl, Bonita Springs",28100 S Tamiami Trl,Bonita Springs,,,America/New_York,unknown,true
+walgreens,"Walgreens - 1534 SE 47th Ter, Cape Coral",1534 SE 47th Ter,Cape Coral,,,America/New_York,unknown,true
+walgreens,"Walgreens - 2414 Del Prado Blvd S, Cape Coral",2414 Del Prado Blvd S,Cape Coral,,,America/New_York,unknown,true
+walgreens,"Walgreens - 4 NE Pine Island Rd, Cape Coral",4 NE Pine Island Rd,Cape Coral,,,America/New_York,unknown,true
+walgreens,"Walgreens - 611 Burnt Store Rd S, Cape Coral",611 Burnt Store Rd S,Cape Coral,,,America/New_York,unknown,true
+walgreens,"Walgreens - 805 Cape Coral Pkwy E, Cape Coral",805 Cape Coral Pkwy E,Cape Coral,,,America/New_York,unknown,true
+walgreens,"Walgreens - 10672 Colonial Blvd, Fort Myers",10672 Colonial Blvd,Fort Myers,,,America/New_York,unknown,true
+walgreens,"Walgreens - 12742 S Cleveland Ave, Fort Myers",12742 S Cleveland Ave,Fort Myers,,,America/New_York,unknown,true
+walgreens,"Walgreens - 15601 San Carlos Blvd, Fort Myers",15601 San Carlos Blvd,Fort Myers,,,America/New_York,unknown,true
+walgreens,"Walgreens - 3593 S Cleveland Ave, Fort Myers",3593 S Cleveland Ave,Fort Myers,,,America/New_York,unknown,true
+walgreens,"Walgreens - 9150 Daniels Pkwy, Fort Myers",9150 Daniels Pkwy,Fort Myers,,,America/New_York,unknown,true
+walgreens,"Walgreens - 15295 Collier Blvd, Naples",15295 Collier Blvd,Naples,,,America/New_York,unknown,true
+walgreens,"Walgreens - 2110 Tamiami Trl N, Naples",2110 Tamiami Trl N,Naples,,,America/New_York,unknown,true
+walgreens,"Walgreens - 4290 Tamiami Trl E, Naples",4290 Tamiami Trl E,Naples,,,America/New_York,unknown,true
+walgreens,"Walgreens - 7301 Radio Rd, Naples",7301 Radio Rd,Naples,,,America/New_York,unknown,true
+walgreens,"Walgreens - 8900 Tamiami Trl N, Naples",8900 Tamiami Trl N,Naples,,,America/New_York,unknown,true
+dollar_general,"Dollar General - 27599 S Tamiami Trl, Bonita Springs",27599 S Tamiami Trl,Bonita Springs,,,America/New_York,unknown,true
+dollar_general,"Dollar General - 28450 Old 41 Rd, Bonita Springs",28450 Old 41 Rd,Bonita Springs,,,America/New_York,unknown,true
+dollar_general,"Dollar General - 1203 NE Pine Island Rd, Cape Coral",1203 NE Pine Island Rd,Cape Coral,,,America/New_York,unknown,true
+dollar_general,"Dollar General - 2606 Del Prado Blvd S, Cape Coral",2606 Del Prado Blvd S,Cape Coral,,,America/New_York,unknown,true
+dollar_general,"Dollar General - 305 SW 3rd St, Cape Coral",305 SW 3rd St,Cape Coral,,,America/New_York,unknown,true
+dollar_general,"Dollar General - 405 Andalusia Blvd, Cape Coral",405 Andalusia Blvd,Cape Coral,,,America/New_York,unknown,true
+dollar_general,"Dollar General - 824 Santa Barbara Blvd N, Cape Coral",824 Santa Barbara Blvd N,Cape Coral,,,America/New_York,unknown,true
+dollar_general,"Dollar General - 19100 S Tamiami Trl, Fort Myers",19100 S Tamiami Trl,Fort Myers,,,America/New_York,unknown,true
+dollar_general,"Dollar General - 2912 Palm Beach Blvd, Fort Myers",2912 Palm Beach Blvd,Fort Myers,,,America/New_York,unknown,true
+dollar_general,"Dollar General - 4225 Cleveland Ave, Fort Myers",4225 Cleveland Ave,Fort Myers,,,America/New_York,unknown,true
+dollar_general,"Dollar General - 8500 Cypress Lake Dr, Fort Myers",8500 Cypress Lake Dr,Fort Myers,,,America/New_York,unknown,true
+dollar_general,"Dollar General - 14751 Tamiami Trl N, Naples",14751 Tamiami Trl N,Naples,,,America/New_York,unknown,true
+dollar_general,"Dollar General - 3755 Radio Rd, Naples",3755 Radio Rd,Naples,,,America/New_York,unknown,true
+dollar_general,"Dollar General - 5040 Tamiami Trl E, Naples",5040 Tamiami Trl E,Naples,,,America/New_York,unknown,true
+family_dollar,"Family Dollar - 27871 Nomad Dr, Bonita Springs",27871 Nomad Dr,Bonita Springs,,,America/New_York,unknown,true
+family_dollar,"Family Dollar - 28178 Tamiami Trl S, Bonita Springs",28178 Tamiami Trl S,Bonita Springs,,,America/New_York,unknown,true
+family_dollar,"Family Dollar - 607 SW 4th St, Cape Coral",607 SW 4th St,Cape Coral,,,America/New_York,unknown,true
+family_dollar,"Family Dollar - 801 SE 47th Ter, Cape Coral",801 SE 47th Ter,Cape Coral,,,America/New_York,unknown,true
+family_dollar,"Family Dollar - 11641 S Cleveland Ave, Fort Myers",11641 S Cleveland Ave,Fort Myers,,,America/New_York,unknown,true
+family_dollar,"Family Dollar - 2244 Fowler St, Fort Myers",2244 Fowler St,Fort Myers,,,America/New_York,unknown,true
+family_dollar,"Family Dollar - 3513 Palm Beach Blvd, Fort Myers",3513 Palm Beach Blvd,Fort Myers,,,America/New_York,unknown,true
+family_dollar,"Family Dollar - 11075 Tamiami Trl E, Naples",11075 Tamiami Trl E,Naples,,,America/New_York,unknown,true
+family_dollar,"Family Dollar - 4955 Tamiami Trl E, Naples",4955 Tamiami Trl E,Naples,,,America/New_York,unknown,true

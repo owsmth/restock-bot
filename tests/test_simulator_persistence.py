@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from datetime import UTC, date, datetime
+from pathlib import Path
 
 import pytest
-from scripts.seed_stores import DEFAULT_CSV_PATH, seed
+from scripts.seed_stores import seed
 from scripts.simulate import purge_simulator, run_simulation
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -16,12 +17,14 @@ from restock.services.reports import ReportService
 
 pytestmark = pytest.mark.integration
 
+EXAMPLE_CSV_PATH = Path(__file__).resolve().parents[1] / "data" / "stores_example.csv"
+
 
 def test_simulation_persists_labeled_rows_and_purge_is_scoped(
     session_factory: SessionFactory,
     db_session: Session,
 ) -> None:
-    seed(DEFAULT_CSV_PATH, session_factory)
+    seed(EXAMPLE_CSV_PATH, session_factory)
 
     stores = StoreRepository(db_session).list_active()
     target_id = next(store.id for store in stores if store.name == "EXAMPLE Target Cape Coral")
