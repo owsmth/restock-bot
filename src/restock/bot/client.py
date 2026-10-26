@@ -35,6 +35,9 @@ class RestockBot(commands.Bot):
         await self.add_cog(ReportCommands(self))
         await self.add_cog(StoreCommands(self))
         guild = discord.Object(id=self.guild_id)
+        # Commands are defined globally in code, but synced only to the test guild.
+        # discord.py syncs guild-specific commands when ``guild`` is provided.
+        self.tree.copy_global_to(guild=guild)
         synced = await self.tree.sync(guild=guild)
         logger.info(
             "commands_synced",
