@@ -120,6 +120,28 @@ observations, false-negative empty-shelf reports during restock windows, and
 background empty-shelf reports. `--purge` deletes observations whose source is
 `simulator`; it leaves user reports, stores, sources, and every other table intact.
 
+## Store candidate export (optional)
+
+```bash
+python scripts/fetch_osm_stores.py
+```
+
+This makes one Overpass API request for the ten supported brands inside a bounding
+box covering Cape Coral, Fort Myers, Bonita Springs, and Naples. It writes
+`data/stores_osm_candidates.csv` in the seed CSV format and never connects to the
+database. The command refuses to overwrite an existing file unless `--force` is
+passed.
+
+Review and edit every row before using it. Rows with no OSM street or city are kept
+so they are visible for review, but have blank fields until you fill them in. Then
+merge the reviewed rows into `data/stores_seed.csv` and run the normal seed command.
+`scripts/seed_stores.py` rejects duplicate `(retailer, name, address)` rows and
+prints created/updated totals.
+
+Store candidate data comes from OpenStreetMap, © OpenStreetMap contributors,
+available under the [Open Database License](https://www.openstreetmap.org/copyright).
+The export is deliberately manual: no OSM data is inserted without review.
+
 ## Tests and checks
 
 ```bash
@@ -143,7 +165,10 @@ CI runs Ruff, mypy, Alembic, and pytest against PostgreSQL 16.
 - Deduplication is keyed by reporter hash, store, category, and `in_stock`, using
   `reported_at`. A transaction-scoped PostgreSQL advisory lock serializes the check
   so simultaneous identical submissions cannot both pass.
-- Seed upserts use `(retailer, name, address)` as the natural key.
+- Seed upserts use `(retailer, name, address)` as the natural key. Duplicate rows
+  are rejected before the database is opened, with line numbers in the error.
+- OSM store candidates are a one-time, single-request, read-only export for manual
+  review. The script never seeds the database, and OSM data is attributed under ODbL.
 - All slash command responses are ephemeral to avoid publishing unverified reports.
 - Display uses each store's timezone. All bundled stores use `America/New_York`.
 - Reporter IDs are never stored or logged. Only a salted SHA-256 hash is stored.

@@ -86,10 +86,23 @@ def load_seed_rows(path: Path) -> list[StoreSeedRow]:
     if not raw_rows:
         raise ValueError(f"{path} contains no store rows")
 
-    rows = [StoreSeedRow.model_validate(row) for row in raw_rows]
-    identities = {(row.retailer, row.name, row.address) for row in rows}
-    if len(identities) != len(rows):
-        raise ValueError(f"{path} contains duplicate store identities")
+    rows: list[StoreSeedRow] = []
+    seen: dict[tuple[Retailer, str, str], int] = {}
+    duplicates: list[str] = []
+    for line_number, raw_row in enumerate(raw_rows, start=2):
+        row = StoreSeedRow.model_validate(raw_row)
+        identity = (row.retailer, row.name, row.address)
+        if identity in seen:
+            duplicates.append(
+                f"line {line_number} duplicates line {seen[identity]}: "
+                f"{row.retailer.value} | {row.name} | {row.address}"
+            )
+        else:
+            seen[identity] = line_number
+        rows.append(row)
+    if duplicates:
+        details = "\n".join(duplicates)
+        raise ValueError(f"{path} contains duplicate store identities:\n{details}")
     return rows
 
 

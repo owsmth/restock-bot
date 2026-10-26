@@ -73,5 +73,6 @@ def test_seed_rejects_duplicate_identity(tmp_path: Path) -> None:
     header, first_row, *_ = original.splitlines()
     csv_path.write_text(f"{header}\n{first_row}\n{first_row}\n", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="duplicate store identities"):
+    with pytest.raises(ValueError, match="duplicate store identities") as error:
         load_seed_rows(csv_path)
+    assert "line 3 duplicates line 2" in str(error.value)
