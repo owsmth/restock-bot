@@ -14,6 +14,7 @@ def make_settings(
     log_level: str = "INFO",
     default_timezone: str = "America/New_York",
     discord_token: SecretStr | None = None,
+    local_restock_channel_id: int | None = None,
 ) -> Settings:
     return Settings(
         _env_file=None,
@@ -22,6 +23,7 @@ def make_settings(
         log_level=log_level,
         default_timezone=default_timezone,
         discord_token=discord_token,
+        local_restock_channel_id=local_restock_channel_id,
     )
 
 
@@ -43,6 +45,13 @@ def test_settings_reject_short_salt() -> None:
 def test_settings_reject_unknown_timezone() -> None:
     with pytest.raises(ValidationError, match="Unknown IANA timezone"):
         make_settings(default_timezone="Mars/Olympus_Mons")
+
+
+def test_settings_allow_optional_restock_channel() -> None:
+    assert make_settings().local_restock_channel_id is None
+    assert make_settings(local_restock_channel_id=123456789).local_restock_channel_id == 123456789
+    with pytest.raises(ValidationError):
+        make_settings(local_restock_channel_id=0)
 
 
 def test_secrets_are_not_exposed_in_repr() -> None:

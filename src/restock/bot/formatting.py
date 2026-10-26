@@ -69,15 +69,24 @@ def format_store_autocomplete(store: StoreSummary) -> str:
     return label[:100]
 
 
-def format_report_receipt(receipt: ReportReceipt) -> str:
+def format_report_receipt(
+    receipt: ReportReceipt,
+    *,
+    announced_publicly: bool = False,
+) -> str:
     stock = "in stock" if receipt.in_stock else "out of stock"
     observed = _local_time(receipt.observed_at, receipt.store_timezone)
+    public_line = (
+        "_This report was also shared to the community feed without your identity._"
+        if announced_publicly
+        else "_Nothing was posted publicly._"
+    )
     return _fit(
         f"✅ Report `#{receipt.observation_id}` saved for "
         f"**{receipt.store_name}**.\n"
         f"{product_label(receipt.product_category)} · **{stock}** · "
         f"observed {observed}.\n"
-        "_Nothing was posted publicly._"
+        f"{public_line}"
     )
 
 

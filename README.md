@@ -41,6 +41,7 @@ reports is `ReportService`. All timestamps are stored in UTC; conversion happens
 - `/report` with validation, hashed reporter IDs, and transaction-safe 30-minute
   deduplication.
 - `/stores` and `/recent` with store autocomplete and New York time display.
+- Optional anonymous public restock feed for `/report` when a channel is configured.
 - Deterministic simulator with weekly and random-daily planted patterns, reporting
   lag, missed restocks, false negatives, and source-scoped purge.
 - Strict typing, linting, tests, structured JSON logs, and a GitHub Actions workflow.
@@ -73,6 +74,9 @@ only initialized on a fresh Compose volume.
 4. Enable Developer Mode, copy the server ID, and set `GUILD_ID`.
 5. Generate a salt for `REPORTER_HASH_SALT`:
    `python -c "import secrets; print(secrets.token_urlsafe(32))"`.
+6. Optional: set `LOCAL_RESTOCK_CHANNEL_ID` to the channel that should receive the
+   anonymous restock feed. Give the bot View Channel, Send Messages, and Embed Links
+   there. Leave it unset to disable the feed.
 
 Commands are synced only to `GUILD_ID` in `setup_hook`, so changes appear
 immediately. The bot needs no privileged message-content intent. Never commit
@@ -82,13 +86,26 @@ immediately. The bot needs no privileged message-content intent. Never commit
 
 | Command | Behavior |
 | --- | --- |
-| `/report store:<autocomplete> product:<choice> in_stock:<bool> [minutes_ago:0-2880] [note]` | Saves an ephemeral report and confirms privately. Nothing is posted publicly. |
+| `/report store:<autocomplete> product:<choice> in_stock:<bool> [minutes_ago:0-2880] [note]` | Saves an ephemeral report and confirms privately. If the feed is enabled, also posts an anonymous update. |
 | `/stores [retailer]` | Lists active stores and IDs. |
 | `/recent store:<autocomplete> [product]` | Shows the latest 10 reports for a store, including source labels and local times. |
 
-Store autocomplete matches substrings of store name or city. Reports older than 48
-hours, future observations, notes over 280 characters, unknown stores, and duplicate
+Store autocomplete matches case-insensitive tokens across retailer, name, city, and
+address, ranks prefix matches first, and shows at most 25 choices. Reports older than
+48 hours, future observations, notes over 280 characters, unknown stores, and duplicate
 reports inside 30 minutes receive friendly ephemeral errors.
+
+## Public feed (optional)
+
+When `LOCAL_RESTOCK_CHANNEL_ID` is set, every saved report posts a compact embed to
+that channel with the store and city, product, in-stock/out-of-stock styling, and the
+observed time as a Discord relative timestamp. The embed contains no reporter name,
+hash, or mention, and the bot sends it with `allowed_mentions=none`.
+
+If the channel is missing, permissions are wrong, or Discord rejects the post, the
+bot logs a warning and returns the normal private confirmation; the report is never
+rolled back. When a post succeeds, the private confirmation says it was shared
+anonymously instead of saying nothing was posted publicly.
 
 ## Simulator
 
@@ -191,6 +208,11 @@ CI runs Ruff, mypy, Alembic, and pytest against PostgreSQL 16.
   Python because matching spans the retailer, name, city, and address and prefix
   matches must sort first. It returns at most 25 choices with case-insensitive
   token matching and truncates each label to Discord's 100-character limit.
+- The public feed is opt-in through `LOCAL_RESTOCK_CHANNEL_ID`. The report service
+  returns the announcement data (including store city), while a bot-layer notifier
+  builds and posts the embed. Posting failures log a warning and return `False`; they
+  never roll back the saved report. The embed has no reporter identity, uses
+  `allowed_mentions=none`, and renders observed time as a relative timestamp.
 - All slash command responses are ephemeral to avoid publishing unverified reports.
 - Display uses each store's timezone. All bundled stores use `America/New_York`.
 - Reporter IDs are never stored or logged. Only a salted SHA-256 hash is stored.

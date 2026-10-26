@@ -90,7 +90,11 @@ class ReportCommands(commands.Cog):
                 "Something went wrong while saving that report. Please try again.",
             )
             return
-        await send_ephemeral(interaction, format_report_receipt(receipt))
+        announced_publicly = await self.bot.report_notifier.announce(receipt)
+        await send_ephemeral(
+            interaction,
+            format_report_receipt(receipt, announced_publicly=announced_publicly),
+        )
 
     @app_commands.command(
         name="recent",

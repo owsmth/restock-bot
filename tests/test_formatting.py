@@ -43,6 +43,7 @@ def test_receipt_uses_store_timezone_and_stays_private() -> None:
     receipt = ReportReceipt(
         observation_id=42,
         store_name="EXAMPLE Target Cape Coral",
+        store_city="Cape Coral",
         store_timezone="America/New_York",
         product_category=ProductCategory.ETB,
         in_stock=True,
@@ -57,6 +58,10 @@ def test_receipt_uses_store_timezone_and_stays_private() -> None:
     assert "in stock" in content
     assert "Mon Oct 26, 11:00 AM EDT" in content
     assert "Nothing was posted publicly" in content
+
+    shared_content = format_report_receipt(receipt, announced_publicly=True)
+    assert "shared to the community feed without your identity" in shared_content
+    assert "Nothing was posted publicly" not in shared_content
 
 
 def test_recent_reports_show_est_and_simulator_label() -> None:

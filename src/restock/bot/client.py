@@ -7,6 +7,7 @@ from discord.ext import commands
 
 from restock.bot.commands.reports import ReportCommands
 from restock.bot.commands.stores import StoreCommands
+from restock.bot.notifier import ReportNotifier
 from restock.services.reports import ReportService
 from restock.services.stores import StoreService
 
@@ -20,6 +21,7 @@ class RestockBot(commands.Bot):
         guild_id: int,
         report_service: ReportService,
         store_service: StoreService,
+        local_restock_channel_id: int | None = None,
     ) -> None:
         super().__init__(
             command_prefix=commands.when_mentioned,
@@ -30,6 +32,8 @@ class RestockBot(commands.Bot):
         self.guild_id = guild_id
         self.report_service = report_service
         self.store_service = store_service
+        self.local_restock_channel_id = local_restock_channel_id
+        self.report_notifier = ReportNotifier(self, local_restock_channel_id)
 
     async def setup_hook(self) -> None:
         await self.add_cog(ReportCommands(self))

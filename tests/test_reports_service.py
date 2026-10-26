@@ -88,6 +88,7 @@ def test_submit_report_stores_utc_and_hashed_reporter(
     observation = db_session.scalar(select(Observation))
     assert observation is not None
     assert receipt.store_timezone == "America/New_York"
+    assert receipt.store_city == "Cape Coral"
     assert observation.store_id == seeded_store
     assert observation.kind.value == "report"
     assert observation.product_category is ProductCategory.ETB

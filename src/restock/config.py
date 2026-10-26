@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     database_url: str
     discord_token: SecretStr | None = None
     guild_id: int | None = None
+    local_restock_channel_id: int | None = Field(default=None, gt=0)
     reporter_hash_salt: SecretStr
     log_level: str = "INFO"
     default_timezone: str = "America/New_York"

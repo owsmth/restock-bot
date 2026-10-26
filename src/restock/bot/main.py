@@ -31,6 +31,7 @@ def build_bot(settings: Settings) -> tuple[RestockBot, Engine]:
             reporter_hash_salt=settings.reporter_hash_salt.get_secret_value(),
         ),
         store_service=StoreService(session_factory),
+        local_restock_channel_id=settings.local_restock_channel_id,
     )
     return bot, engine
 

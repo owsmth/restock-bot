@@ -61,6 +61,7 @@ class ReportSubmission(BaseModel):
 class ReportReceipt:
     observation_id: int
     store_name: str
+    store_city: str
     store_timezone: str
     product_category: ProductCategory
     in_stock: bool
@@ -192,6 +193,7 @@ class ReportService:
             receipt = ReportReceipt(
                 observation_id=observation.id,
                 store_name=store.name,
+                store_city=store.city,
                 store_timezone=store.timezone,
                 product_category=observation.product_category,
                 in_stock=observation.in_stock,
