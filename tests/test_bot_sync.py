@@ -32,4 +32,28 @@ def test_setup_hook_copies_global_commands_into_guild_sync(
     asyncio.run(bot.setup_hook())
 
     assert synced_guild == GUILD_ID
-    assert synced_commands == ["recent", "report", "stores"]
+    assert synced_commands == [
+        "admin_delete_report",
+        "admin_set_store_active",
+        "help",
+        "recent",
+        "report",
+        "stores",
+    ]
+
+    commands = {
+        command.name: command
+        for command in bot.tree.get_commands(guild=discord.Object(id=GUILD_ID))
+        if isinstance(command, discord.app_commands.Command)
+    }
+    delete_command = commands["admin_delete_report"]
+    assert delete_command.default_permissions == discord.Permissions(manage_guild=True)
+    assert [parameter.name for parameter in delete_command.parameters] == ["report_id"]
+    assert [parameter.display_name for parameter in delete_command.parameters] == ["id"]
+    set_active_command = commands["admin_set_store_active"]
+    assert set_active_command.default_permissions == discord.Permissions(manage_guild=True)
+    assert [parameter.name for parameter in set_active_command.parameters] == [
+        "store",
+        "active",
+    ]
+    assert commands["help"].default_permissions is None

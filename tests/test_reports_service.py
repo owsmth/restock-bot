@@ -19,7 +19,9 @@ from restock.repositories.stores import StoreRepository, StoreWrite
 from restock.services.errors import (
     DuplicateReportError,
     InvalidReportError,
+    RateLimitExceededError,
     ReportingUnavailableError,
+    ReportNotFoundError,
     StoreInactiveError,
     StoreNotFoundError,
 )
@@ -157,6 +159,84 @@ def test_duplicate_key_includes_in_stock_and_reporter(
     assert (
         len({first.observation_id, other_stock.observation_id, other_reporter.observation_id}) == 3
     )
+
+
+def test_rate_limit_is_per_reporter_and_configurable(
+    session_factory: SessionFactory,
+    seeded_source: int,
+    seeded_store: int,
+    clock: MutableClock,
+) -> None:
+    del seeded_source
+    service = ReportService(
+        session_factory,
+        reporter_hash_salt=SALT,
+        clock=clock,
+        rate_limit_per_hour=2,
+    )
+    service.submit_report(
+        reporter_id=1,
+        store_id=seeded_store,
+        product_category=ProductCategory.ETB,
+        in_stock=True,
+    )
+    clock.now += timedelta(minutes=1)
+    service.submit_report(
+        reporter_id=1,
+        store_id=seeded_store,
+        product_category=ProductCategory.BOOSTER_BOX,
+        in_stock=False,
+    )
+
+    clock.now += timedelta(minutes=1)
+    with pytest.raises(RateLimitExceededError, match="2 reports per hour"):
+        service.submit_report(
+            reporter_id=1,
+            store_id=seeded_store,
+            product_category=ProductCategory.TIN,
+            in_stock=True,
+        )
+
+    service.submit_report(
+        reporter_id=2,
+        store_id=seeded_store,
+        product_category=ProductCategory.ETB,
+        in_stock=True,
+    )
+
+    clock.now += timedelta(hours=1, seconds=1)
+    receipt = service.submit_report(
+        reporter_id=1,
+        store_id=seeded_store,
+        product_category=ProductCategory.ETB,
+        in_stock=True,
+    )
+    assert receipt.observation_id > 0
+
+
+def test_admin_delete_report(
+    report_service: ReportService,
+    seeded_store: int,
+    db_session: Session,
+) -> None:
+    receipt = report_service.submit_report(
+        reporter_id=1,
+        store_id=seeded_store,
+        product_category=ProductCategory.ETB,
+        in_stock=True,
+    )
+
+    deleted = report_service.delete_report(receipt.observation_id)
+
+    assert deleted.observation_id == receipt.observation_id
+    assert deleted.store_id == seeded_store
+    assert deleted.store_name == "EXAMPLE Test Store"
+    assert deleted.product_category is ProductCategory.ETB
+    assert deleted.in_stock is True
+    db_session.expire_all()
+    assert db_session.get(Observation, receipt.observation_id) is None
+    with pytest.raises(ReportNotFoundError):
+        report_service.delete_report(receipt.observation_id)
 
 
 @pytest.mark.parametrize(

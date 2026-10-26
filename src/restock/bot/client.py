@@ -5,6 +5,8 @@ import structlog
 from discord import app_commands
 from discord.ext import commands
 
+from restock.bot.commands.admin import AdminCommands
+from restock.bot.commands.help import HelpCommands
 from restock.bot.commands.reports import ReportCommands
 from restock.bot.commands.stores import StoreCommands
 from restock.bot.notifier import ReportNotifier
@@ -38,6 +40,8 @@ class RestockBot(commands.Bot):
     async def setup_hook(self) -> None:
         await self.add_cog(ReportCommands(self))
         await self.add_cog(StoreCommands(self))
+        await self.add_cog(AdminCommands(self))
+        await self.add_cog(HelpCommands(self))
         guild = discord.Object(id=self.guild_id)
         # Commands are defined globally in code, but synced only to the test guild.
         # discord.py syncs guild-specific commands when ``guild`` is provided.

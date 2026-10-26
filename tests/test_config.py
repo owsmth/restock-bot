@@ -15,6 +15,7 @@ def make_settings(
     default_timezone: str = "America/New_York",
     discord_token: SecretStr | None = None,
     local_restock_channel_id: int | None = None,
+    report_rate_limit_per_hour: int = 10,
 ) -> Settings:
     return Settings(
         _env_file=None,
@@ -24,6 +25,7 @@ def make_settings(
         default_timezone=default_timezone,
         discord_token=discord_token,
         local_restock_channel_id=local_restock_channel_id,
+        report_rate_limit_per_hour=report_rate_limit_per_hour,
     )
 
 
@@ -52,6 +54,13 @@ def test_settings_allow_optional_restock_channel() -> None:
     assert make_settings(local_restock_channel_id=123456789).local_restock_channel_id == 123456789
     with pytest.raises(ValidationError):
         make_settings(local_restock_channel_id=0)
+
+
+def test_settings_rate_limit_defaults_and_validates() -> None:
+    assert make_settings().report_rate_limit_per_hour == 10
+    assert make_settings(report_rate_limit_per_hour=3).report_rate_limit_per_hour == 3
+    with pytest.raises(ValidationError):
+        make_settings(report_rate_limit_per_hour=0)
 
 
 def test_secrets_are_not_exposed_in_repr() -> None:

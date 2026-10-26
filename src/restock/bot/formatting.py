@@ -69,6 +69,19 @@ def format_store_autocomplete(store: StoreSummary) -> str:
     return label[:100]
 
 
+def format_help() -> str:
+    return (
+        "**Restock bot help**\n"
+        "`/report` — save what you saw at a store: product, in/out of stock, "
+        "and optional minutes ago.\n"
+        "`/stores` — list active stores. Store autocomplete searches retailer, "
+        "name, city, and address.\n"
+        "`/recent` — show the latest reports for a store.\n"
+        "Reports are crowdsourced and unverified. Use the autocomplete instead of "
+        "typing a store ID."
+    )
+
+
 def format_report_receipt(
     receipt: ReportReceipt,
     *,

@@ -24,7 +24,9 @@ from restock.repositories.stores import StoreRepository
 from restock.services.errors import (
     DuplicateReportError,
     InvalidReportError,
+    RateLimitExceededError,
     ReportingUnavailableError,
+    ReportNotFoundError,
     StoreInactiveError,
     StoreNotFoundError,
 )
@@ -67,6 +69,15 @@ class ReportReceipt:
     in_stock: bool
     observed_at: datetime
     reported_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class DeletedReport:
+    observation_id: int
+    store_id: int
+    store_name: str
+    product_category: ProductCategory
+    in_stock: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,10 +126,14 @@ class ReportService:
         *,
         reporter_hash_salt: str,
         clock: Callable[[], datetime] = utc_now,
+        rate_limit_per_hour: int = 10,
     ) -> None:
+        if rate_limit_per_hour < 1:
+            raise ValueError("rate_limit_per_hour must be positive")
         self._session_factory = session_factory
         self._reporter_hash_salt = reporter_hash_salt
         self._clock = clock
+        self._rate_limit_per_hour = rate_limit_per_hour
 
     def submit_report(
         self,
@@ -162,6 +177,20 @@ class ReportService:
                 raise ReportingUnavailableError()
 
             observation_repository = ObservationRepository(session)
+            observation_repository.lock_reporter(reporter_hash)
+            recent_reports = observation_repository.count_recent_by_reporter(
+                reporter_hash=reporter_hash,
+                submitted_since=reported_at - timedelta(hours=1),
+                source_id=source.id,
+            )
+            if recent_reports >= self._rate_limit_per_hour:
+                logger.info(
+                    "report_rate_limited",
+                    store_id=submission.store_id,
+                    rate_limit_per_hour=self._rate_limit_per_hour,
+                )
+                raise RateLimitExceededError(self._rate_limit_per_hour)
+
             observation_repository.lock_report_identity(
                 reporter_hash=reporter_hash,
                 store_id=store.id,
@@ -210,6 +239,34 @@ class ReportService:
             minutes_ago=submission.minutes_ago,
         )
         return receipt
+
+    def delete_report(self, observation_id: int) -> DeletedReport:
+        if observation_id <= 0:
+            raise ReportNotFoundError(observation_id)
+
+        with session_scope(self._session_factory) as session:
+            observation_repository = ObservationRepository(session)
+            observation = observation_repository.get(observation_id)
+            if observation is None:
+                raise ReportNotFoundError(observation_id)
+            store = StoreRepository(session).get(observation.store_id)
+            deleted = observation_repository.delete_by_id(observation.id)
+            if not deleted:
+                raise ReportNotFoundError(observation_id)
+            deleted_report = DeletedReport(
+                observation_id=observation.id,
+                store_id=observation.store_id,
+                store_name=store.name if store is not None else f"store {observation.store_id}",
+                product_category=observation.product_category,
+                in_stock=observation.in_stock,
+            )
+
+        logger.info(
+            "report_deleted",
+            observation_id=deleted_report.observation_id,
+            store_id=deleted_report.store_id,
+        )
+        return deleted_report
 
     def list_recent(
         self,

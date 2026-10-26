@@ -70,6 +70,7 @@ class StoreSummary:
     city: str
     timezone: str
     restock_regime: RestockRegime
+    active: bool = True
 
     @classmethod
     def from_model(cls, store: Store) -> StoreSummary:
@@ -81,6 +82,7 @@ class StoreSummary:
             city=store.city,
             timezone=store.timezone,
             restock_regime=store.restock_regime,
+            active=store.active,
         )
 
 
@@ -98,6 +100,19 @@ class StoreService:
             stores = StoreRepository(session).list_active()
             summaries = [StoreSummary.from_model(store) for store in stores]
         return rank_store_matches(summaries, query, limit=limit)
+
+    def search_all(self, query: str, *, limit: int = AUTOCOMPLETE_LIMIT) -> list[StoreSummary]:
+        with session_scope(self._session_factory) as session:
+            stores = StoreRepository(session).list_all()
+            summaries = [StoreSummary.from_model(store) for store in stores]
+        return rank_store_matches(summaries, query, limit=limit)
+
+    def set_active(self, store_id: int, active: bool) -> StoreSummary:
+        with session_scope(self._session_factory) as session:
+            store = StoreRepository(session).set_active(store_id, active)
+            if store is None:
+                raise StoreNotFoundError(store_id)
+            return StoreSummary.from_model(store)
 
     def get_active(self, store_id: int) -> StoreSummary:
         with session_scope(self._session_factory) as session:

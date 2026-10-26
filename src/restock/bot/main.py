@@ -29,6 +29,7 @@ def build_bot(settings: Settings) -> tuple[RestockBot, Engine]:
         report_service=ReportService(
             session_factory,
             reporter_hash_salt=settings.reporter_hash_salt.get_secret_value(),
+            rate_limit_per_hour=settings.report_rate_limit_per_hour,
         ),
         store_service=StoreService(session_factory),
         local_restock_channel_id=settings.local_restock_channel_id,

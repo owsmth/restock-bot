@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from restock.bot.formatting import (
+    format_help,
     format_recent,
     format_report_receipt,
     format_store,
@@ -113,3 +114,12 @@ def test_recent_empty_state() -> None:
 def test_labels_cover_every_enum_value() -> None:
     assert all(product_label(category) for category in ProductCategory)
     assert all(retailer_label(retailer) for retailer in Retailer)
+
+
+def test_help_mentions_public_commands() -> None:
+    content = format_help()
+
+    assert "/report" in content
+    assert "/stores" in content
+    assert "/recent" in content
+    assert "autocomplete" in content

@@ -42,6 +42,7 @@ reports is `ReportService`. All timestamps are stored in UTC; conversion happens
   deduplication.
 - `/stores` and `/recent` with store autocomplete and New York time display.
 - Optional anonymous public restock feed for `/report` when a channel is configured.
+- Per-reporter hourly rate limiting plus Manage Server admin commands and `/help`.
 - Deterministic simulator with weekly and random-daily planted patterns, reporting
   lag, missed restocks, false negatives, and source-scoped purge.
 - Strict typing, linting, tests, structured JSON logs, and a GitHub Actions workflow.
@@ -76,7 +77,8 @@ only initialized on a fresh Compose volume.
    `python -c "import secrets; print(secrets.token_urlsafe(32))"`.
 6. Optional: set `LOCAL_RESTOCK_CHANNEL_ID` to the channel that should receive the
    anonymous restock feed. Give the bot View Channel, Send Messages, and Embed Links
-   there. Leave it unset to disable the feed.
+   there. Leave it unset to disable the feed. Set `REPORT_RATE_LIMIT_PER_HOUR` if the
+   default of 10 reports per reporter per hour is not suitable.
 
 Commands are synced only to `GUILD_ID` in `setup_hook`, so changes appear
 immediately. The bot needs no privileged message-content intent. Never commit
@@ -89,11 +91,26 @@ immediately. The bot needs no privileged message-content intent. Never commit
 | `/report store:<autocomplete> product:<choice> in_stock:<bool> [minutes_ago:0-2880] [note]` | Saves an ephemeral report and confirms privately. If the feed is enabled, also posts an anonymous update. |
 | `/stores [retailer]` | Lists active stores and IDs. |
 | `/recent store:<autocomplete> [product]` | Shows the latest 10 reports for a store, including source labels and local times. |
+| `/help` | Ephemeral explanation of `/report`, `/stores`, and `/recent`. |
+| `/admin_delete_report id` | Deletes one report. Manage Server by default; ephemeral. |
+| `/admin_set_store_active store active` | Activates or deactivates a store, including inactive stores in autocomplete. Manage Server by default; ephemeral. |
 
 Store autocomplete matches case-insensitive tokens across retailer, name, city, and
 address, ranks prefix matches first, and shows at most 25 choices. Reports older than
-48 hours, future observations, notes over 280 characters, unknown stores, and duplicate
-reports inside 30 minutes receive friendly ephemeral errors.
+48 hours, future observations, notes over 280 characters, unknown stores, duplicate
+reports inside 30 minutes, and reporters over their hourly limit receive friendly
+ephemeral errors.
+
+## Rate limits and admin commands
+
+`REPORT_RATE_LIMIT_PER_HOUR` defaults to `10`. The limit is a rolling one-hour window
+per salted reporter hash and is enforced inside the report service under a PostgreSQL
+advisory lock, so changing the env var requires a bot restart.
+
+The two `/admin_...` commands are registered with
+`default_member_permissions=Manage Server`, respond ephemerally, and log an
+`admin_action` event with the action, outcome, and database IDs. Admin logs never
+include the acting Discord user ID, guild ID, channel ID, or reporter hash.
 
 ## Public feed (optional)
 
@@ -186,9 +203,9 @@ mypy src tests scripts
 Tests use a real PostgreSQL database, not mocks. They read
 `RESTOCK_TEST_DATABASE_URL` from the environment or `.env` and apply Alembic
 migrations automatically. Service tests cover validation, hashing, deduplication,
-recent-report queries, simulator persistence, and source-scoped purge. Bot behavior
-is tested at the command parsing/formatting + service seam, never by connecting to
-Discord.
+rate limiting, recent-report queries, admin deletion/store activation, simulator
+persistence, and source-scoped purge. Bot behavior is tested at the command
+parsing/formatting + service seam, never by connecting to Discord.
 
 CI runs Ruff, mypy, Alembic, and pytest against PostgreSQL 16.
 
@@ -213,6 +230,12 @@ CI runs Ruff, mypy, Alembic, and pytest against PostgreSQL 16.
   builds and posts the embed. Posting failures log a warning and return `False`; they
   never roll back the saved report. The embed has no reporter identity, uses
   `allowed_mentions=none`, and renders observed time as a relative timestamp.
+- Rate limiting is a rolling hour per `reporter_hash`, defaulting to 10 and configurable
+  with `REPORT_RATE_LIMIT_PER_HOUR`. A reporter-level advisory lock counts accepted
+  Discord reports before insert, so concurrent submissions cannot bypass it.
+- Admin commands use `default_member_permissions=Manage Server`, keep all responses
+  ephemeral, and write structured action logs without Discord user, guild, or channel
+  IDs or reporter hashes.
 - All slash command responses are ephemeral to avoid publishing unverified reports.
 - Display uses each store's timezone. All bundled stores use `America/New_York`.
 - Reporter IDs are never stored or logged. Only a salted SHA-256 hash is stored.
@@ -227,14 +250,13 @@ CI runs Ruff, mypy, Alembic, and pytest against PostgreSQL 16.
 - No prediction windows, backtest, `/predict`, subscriptions, or nightly worker yet.
 - No scraping, LLM/agent layer, auto-purchasing, Facebook ingestion, or third-party
   Discord ingestion.
-- Seed stores and coordinates are deliberately fake. Replace them before inviting
-  real users.
 - Simulator patterns are tied to the example store names and only cover six stores.
 - Crowdsourced reports are unverified. Source trust weights are stored but are not
   yet applied to predictions.
-- No moderation queue, per-user command cooldown, data-retention job, or store
-  management command.
-- This build environment had no Docker and no Discord token. The Compose path and
-  live Discord login were not executed here; verification used local PostgreSQL 18,
-  direct command-registration checks, and service-level tests. CI is configured for
-  PostgreSQL 16 and will exercise the Compose-equivalent database path.
+- No moderation queue, data-retention job, or scheduled jobs yet.
+- Admin commands rely on Discord's default command permissions; a server administrator
+  can override the default permission in Discord's integration settings.
+- The bundled seed CSV is still deliberately fake until the reviewed OSM candidates
+  replace it. No real store data was invented or committed.
+- GitHub Actions has not run yet. Optionally configured feed/rate-limit/admin commands
+  are tested locally but have not been exercised live until the bot is restarted.

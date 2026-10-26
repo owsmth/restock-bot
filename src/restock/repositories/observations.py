@@ -51,6 +51,9 @@ class ObservationRepository:
         self._session.flush()
         return observation
 
+    def get(self, observation_id: int) -> Observation | None:
+        return self._session.get(Observation, observation_id)
+
     def bulk_create(self, values: Sequence[ObservationWrite]) -> int:
         observations = [
             Observation(
@@ -83,6 +86,32 @@ class ObservationRepository:
         self._session.execute(
             text("SELECT pg_advisory_xact_lock(hashtextextended(:lock_key, 0))"),
             {"lock_key": lock_key},
+        )
+
+    def lock_reporter(self, reporter_hash: str) -> None:
+        self._session.execute(
+            text("SELECT pg_advisory_xact_lock(hashtextextended(:lock_key, 0))"),
+            {"lock_key": f"reporter:{reporter_hash}"},
+        )
+
+    def count_recent_by_reporter(
+        self,
+        *,
+        reporter_hash: str,
+        submitted_since: datetime,
+        source_id: int,
+    ) -> int:
+        return int(
+            self._session.scalar(
+                select(func.count())
+                .select_from(Observation)
+                .where(
+                    Observation.reporter_hash == reporter_hash,
+                    Observation.source_id == source_id,
+                    Observation.reported_at >= submitted_since,
+                )
+            )
+            or 0
         )
 
     def has_recent_duplicate(
@@ -168,3 +197,9 @@ class ObservationRepository:
             delete(Observation).where(Observation.store_id.in_(store_ids)).returning(Observation.id)
         )
         return len(result.all())
+
+    def delete_by_id(self, observation_id: int) -> bool:
+        result = self._session.execute(
+            delete(Observation).where(Observation.id == observation_id).returning(Observation.id)
+        )
+        return result.first() is not None

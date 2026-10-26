@@ -12,7 +12,7 @@ from restock.bot.formatting import (
     format_store_autocomplete,
 )
 from restock.db.models import ProductCategory, Retailer
-from restock.services.stores import StoreService
+from restock.services.stores import StoreService, StoreSummary
 
 logger = structlog.get_logger(__name__)
 
@@ -72,13 +72,21 @@ def log_command_invocation(
     )
 
 
+def log_admin_action(action: str, outcome: str, **fields: object) -> None:
+    # Deliberately excludes Discord actor, guild, and channel IDs.
+    logger.info("admin_action", admin_action=action, outcome=outcome, **fields)
+
+
 async def autocomplete_stores(
     service: StoreService,
     current: str,
+    *,
+    include_inactive: bool = False,
 ) -> list[app_commands.Choice[str]]:
+    search = service.search_all if include_inactive else service.search_active
     try:
         async with asyncio.timeout(2.5):
-            stores = await asyncio.to_thread(service.search_active, current, limit=25)
+            stores = await asyncio.to_thread(search, current, limit=25)
     except TimeoutError:
         logger.warning("store_autocomplete_timeout")
         return []
@@ -87,11 +95,18 @@ async def autocomplete_stores(
         return []
     return [
         app_commands.Choice(
-            name=format_store_autocomplete(store),
+            name=_autocomplete_choice_name(store, include_inactive=include_inactive),
             value=str(store.id),
         )
         for store in stores
     ]
+
+
+def _autocomplete_choice_name(store: StoreSummary, *, include_inactive: bool) -> str:
+    label = format_store_autocomplete(store)
+    if include_inactive and not store.active:
+        return f"{label} (inactive)"[:100]
+    return label
 
 
 async def send_ephemeral(

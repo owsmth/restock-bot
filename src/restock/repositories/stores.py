@@ -34,6 +34,17 @@ class StoreRepository:
             statement = statement.where(Store.retailer == retailer)
         return list(self._session.scalars(statement.order_by(Store.name)))
 
+    def list_all(self) -> list[Store]:
+        return list(self._session.scalars(select(Store).order_by(Store.name)))
+
+    def set_active(self, store_id: int, active: bool) -> Store | None:
+        store = self.get(store_id)
+        if store is None:
+            return None
+        store.active = active
+        self._session.flush()
+        return store
+
     def list_by_name_prefix(self, prefix: str) -> list[Store]:
         return list(
             self._session.scalars(

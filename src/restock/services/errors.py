@@ -37,3 +37,15 @@ class ReportingUnavailableError(ServiceError):
             "Reporting is temporarily unavailable because the report source "
             "is not configured. Please contact a server operator."
         )
+
+
+class RateLimitExceededError(ServiceError):
+    def __init__(self, limit: int) -> None:
+        super().__init__(
+            f"You reached the limit of {limit} reports per hour. Please wait a while and try again."
+        )
+
+
+class ReportNotFoundError(ServiceError):
+    def __init__(self, observation_id: int) -> None:
+        super().__init__(f"Report {observation_id} was not found.")

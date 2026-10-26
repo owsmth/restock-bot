@@ -60,6 +60,24 @@ def test_search_uses_address_retailer_and_all_query_tokens(store_service: StoreS
     assert store_service.search_active("%") == []
 
 
+def test_set_active_and_search_all_includes_inactive(store_service: StoreService) -> None:
+    inactive = store_service.search_all("walmart")
+    assert len(inactive) == 1
+    assert inactive[0].active is False
+    assert store_service.search_active("walmart") == []
+
+    activated = store_service.set_active(inactive[0].id, True)
+    assert activated.active is True
+    assert [store.name for store in store_service.search_active("walmart")] == [
+        "EXAMPLE Walmart Fort Myers"
+    ]
+
+    deactivated = store_service.set_active(inactive[0].id, False)
+    assert deactivated.active is False
+    with pytest.raises(StoreNotFoundError):
+        store_service.set_active(999_999, True)
+
+
 def test_get_active_rejects_missing_and_inactive(store_service: StoreService) -> None:
     with pytest.raises(StoreNotFoundError):
         store_service.get_active(999_999)
