@@ -142,6 +142,21 @@ Store candidate data comes from OpenStreetMap, © OpenStreetMap contributors,
 available under the [Open Database License](https://www.openstreetmap.org/copyright).
 The export is deliberately manual: no OSM data is inserted without review.
 
+## Cleanup example data
+
+After the real store CSV is reviewed and seeded, remove the six demonstration
+stores and every simulator row:
+
+```bash
+python scripts/remove_example_data.py --yes
+```
+
+Without `--yes` the command refuses to change anything and exits. It deletes
+observations first, then stores, and prints store/observation counts before and
+after. All stores whose names start with `EXAMPLE` are removed, along with every
+observation at those stores and every observation from the `simulator` source.
+Sources, real stores, and real user reports are left intact.
+
 ## Tests and checks
 
 ```bash
@@ -169,6 +184,9 @@ CI runs Ruff, mypy, Alembic, and pytest against PostgreSQL 16.
   are rejected before the database is opened, with line numbers in the error.
 - OSM store candidates are a one-time, single-request, read-only export for manual
   review. The script never seeds the database, and OSM data is attributed under ODbL.
+- Example data cleanup is explicit (`--yes`), removes observations before stores,
+  and also removes all `simulator`-source observations. It never removes sources or
+  real user reports.
 - All slash command responses are ephemeral to avoid publishing unverified reports.
 - Display uses each store's timezone. All bundled stores use `America/New_York`.
 - Reporter IDs are never stored or logged. Only a salted SHA-256 hash is stored.

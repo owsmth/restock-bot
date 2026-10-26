@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from sqlalchemy import or_, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from restock.db.models import RestockRegime, Retailer, Store
@@ -33,6 +33,18 @@ class StoreRepository:
         if retailer is not None:
             statement = statement.where(Store.retailer == retailer)
         return list(self._session.scalars(statement.order_by(Store.name)))
+
+    def list_by_name_prefix(self, prefix: str) -> list[Store]:
+        return list(
+            self._session.scalars(
+                select(Store)
+                .where(Store.name.startswith(prefix, autoescape=True))
+                .order_by(Store.id)
+            )
+        )
+
+    def count_all(self) -> int:
+        return int(self._session.scalar(select(func.count()).select_from(Store)) or 0)
 
     def search_active(self, query: str, *, limit: int = 25) -> list[Store]:
         normalized = query.strip()
@@ -78,3 +90,11 @@ class StoreRepository:
         store.active = values.active
         self._session.flush()
         return store, False
+
+    def delete_ids(self, store_ids: list[int]) -> int:
+        if not store_ids:
+            return 0
+        result = self._session.execute(
+            delete(Store).where(Store.id.in_(store_ids)).returning(Store.id)
+        )
+        return len(result.all())

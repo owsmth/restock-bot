@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import delete, select, text
+from sqlalchemy import delete, func, select, text
 from sqlalchemy.orm import Session
 
 from restock.db.models import Observation, ObservationKind, ProductCategory, Source
@@ -130,8 +130,41 @@ class ObservationRepository:
             for observation, source_name in self._session.execute(statement)
         ]
 
+    def count_all(self) -> int:
+        return int(self._session.scalar(select(func.count()).select_from(Observation)) or 0)
+
+    def count_by_source(self, source_id: int) -> int:
+        return int(
+            self._session.scalar(
+                select(func.count())
+                .select_from(Observation)
+                .where(Observation.source_id == source_id)
+            )
+            or 0
+        )
+
+    def count_by_store_ids(self, store_ids: Sequence[int]) -> int:
+        if not store_ids:
+            return 0
+        return int(
+            self._session.scalar(
+                select(func.count())
+                .select_from(Observation)
+                .where(Observation.store_id.in_(store_ids))
+            )
+            or 0
+        )
+
     def delete_by_source(self, source_id: int) -> int:
         result = self._session.execute(
             delete(Observation).where(Observation.source_id == source_id).returning(Observation.id)
+        )
+        return len(result.all())
+
+    def delete_by_store_ids(self, store_ids: Sequence[int]) -> int:
+        if not store_ids:
+            return 0
+        result = self._session.execute(
+            delete(Observation).where(Observation.store_id.in_(store_ids)).returning(Observation.id)
         )
         return len(result.all())
