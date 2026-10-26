@@ -108,11 +108,12 @@ def test_observation_recent_and_filter(db_session: Session) -> None:
 
     recent = repository.list_recent(store_id=store.id)
     assert len(recent) == 3
-    assert [item.product_category for item in recent] == [
+    assert [item.observation.product_category for item in recent] == [
         ProductCategory.ETB,
         ProductCategory.BOOSTER_BOX,
         ProductCategory.ETB,
     ]
+    assert all(item.source_name == "discord_report" for item in recent)
 
     etb_recent = repository.list_recent(
         store_id=store.id,
@@ -120,7 +121,7 @@ def test_observation_recent_and_filter(db_session: Session) -> None:
         limit=1,
     )
     assert len(etb_recent) == 1
-    assert etb_recent[0].in_stock is True
+    assert etb_recent[0].observation.in_stock is True
 
 
 def test_observation_duplicate_lookup(db_session: Session) -> None:

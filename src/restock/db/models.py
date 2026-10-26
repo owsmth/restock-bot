@@ -57,6 +57,12 @@ class ProductCategory(StrEnum):
     OTHER = "other"
 
 
+class SourceName(StrEnum):
+    DISCORD_REPORT = "discord_report"
+    SIMULATOR = "simulator"
+    MANUAL_LOG = "manual_log"
+
+
 def _enum_values(enum_type: type[StrEnum]) -> list[str]:
     return [member.value for member in enum_type]
 

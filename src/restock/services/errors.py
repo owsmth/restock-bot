@@ -17,3 +17,23 @@ class StoreNotFoundError(ServiceError):
 class StoreInactiveError(ServiceError):
     def __init__(self, store_name: str) -> None:
         super().__init__(f"{store_name} is not currently accepting reports.")
+
+
+class DuplicateReportError(ServiceError):
+    def __init__(self) -> None:
+        super().__init__(
+            "You already submitted that exact report in the last 30 minutes. "
+            "If conditions changed, update the in-stock value or try again later."
+        )
+
+
+class InvalidReportError(ServiceError):
+    pass
+
+
+class ReportingUnavailableError(ServiceError):
+    def __init__(self) -> None:
+        super().__init__(
+            "Reporting is temporarily unavailable because the report source "
+            "is not configured. Please contact a server operator."
+        )

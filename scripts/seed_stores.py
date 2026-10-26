@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from restock.config import get_settings
 from restock.db.engine import create_db_engine
-from restock.db.models import RestockRegime, Retailer
+from restock.db.models import RestockRegime, Retailer, SourceName
 from restock.db.session import SessionFactory, create_session_factory, session_scope
 from restock.logging import configure_logging
 from restock.repositories.sources import SourceRepository, SourceWrite
@@ -21,7 +21,7 @@ DEFAULT_CSV_PATH = Path(__file__).resolve().parents[1] / "data" / "stores_seed.c
 
 SEED_SOURCES: tuple[SourceWrite, ...] = (
     SourceWrite(
-        name="discord_report",
+        name=SourceName.DISCORD_REPORT.value,
         trust_weight=0.65,
         compliance_note=(
             "Submitted by authenticated Discord users through this bot; "
@@ -29,14 +29,14 @@ SEED_SOURCES: tuple[SourceWrite, ...] = (
         ),
     ),
     SourceWrite(
-        name="simulator",
+        name=SourceName.SIMULATOR.value,
         trust_weight=1.0,
         compliance_note=(
             "Synthetic data generated only by scripts/simulate.py; not a real-world observation."
         ),
     ),
     SourceWrite(
-        name="manual_log",
+        name=SourceName.MANUAL_LOG.value,
         trust_weight=0.9,
         compliance_note=(
             "Operator-entered observation used for manual reconciliation; not user-generated."

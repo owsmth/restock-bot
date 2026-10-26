@@ -7,7 +7,13 @@ from datetime import datetime
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from restock.db.models import Observation, ObservationKind, ProductCategory
+from restock.db.models import Observation, ObservationKind, ProductCategory, Source
+
+
+@dataclass(frozen=True, slots=True)
+class ObservationRecord:
+    observation: Observation
+    source_name: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,15 +99,22 @@ class ObservationRepository:
         store_id: int,
         product_category: ProductCategory | None = None,
         limit: int = 10,
-    ) -> list[Observation]:
-        statement = select(Observation).where(Observation.store_id == store_id)
+    ) -> list[ObservationRecord]:
+        statement = (
+            select(Observation, Source.name)
+            .join(Source, Source.id == Observation.source_id)
+            .where(Observation.store_id == store_id)
+        )
         if product_category is not None:
             statement = statement.where(Observation.product_category == product_category)
         statement = statement.order_by(
             Observation.observed_at.desc(),
             Observation.id.desc(),
         ).limit(limit)
-        return list(self._session.scalars(statement))
+        return [
+            ObservationRecord(observation=observation, source_name=source_name)
+            for observation, source_name in self._session.execute(statement)
+        ]
 
     def delete_by_source(self, source_id: int) -> int:
         result = self._session.execute(
