@@ -30,6 +30,7 @@ packages = ["src/restock"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = [".", "src"]
 addopts = "-ra --strict-markers"
 markers = [
   "integration: requires a real PostgreSQL test database",
