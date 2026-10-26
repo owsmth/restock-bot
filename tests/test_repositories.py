@@ -67,12 +67,6 @@ def test_store_queries_filter_and_search(db_session: Session) -> None:
 
     assert len(repository.list_active()) == 2
     assert len(repository.list_active(Retailer.WALMART)) == 0
-    assert [store.city for store in repository.search_active("fort")] == ["Fort Myers"]
-    assert [store.name for store in repository.search_active("cape")] == [
-        "EXAMPLE Target Cape Coral"
-    ]
-    assert repository.search_active("%") == []
-    assert repository.search_active("Cape", limit=1)[0].name == "EXAMPLE Target Cape Coral"
     assert repository.get(999999) is None
 
 

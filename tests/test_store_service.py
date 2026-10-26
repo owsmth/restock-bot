@@ -53,6 +53,13 @@ def test_search_is_case_insensitive(store_service: StoreService) -> None:
     assert store_service.search_active("FORT") == []
 
 
+def test_search_uses_address_retailer_and_all_query_tokens(store_service: StoreService) -> None:
+    assert [store.id for store in store_service.search_active("example retail")] == [1]
+    assert [store.id for store in store_service.search_active("TARGET cape")] == [1]
+    assert store_service.search_active("target fort") == []
+    assert store_service.search_active("%") == []
+
+
 def test_get_active_rejects_missing_and_inactive(store_service: StoreService) -> None:
     with pytest.raises(StoreNotFoundError):
         store_service.get_active(999_999)

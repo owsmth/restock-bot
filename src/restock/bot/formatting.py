@@ -55,6 +55,20 @@ def format_store(stores: list[StoreSummary]) -> str:
     return _fit("\n".join(lines))
 
 
+def format_store_autocomplete(store: StoreSummary) -> str:
+    retailer = retailer_label(store.retailer)
+    if store.address:
+        location = store.address
+        if store.city:
+            location = f"{location}, {store.city}"
+        label = f"{retailer} - {location}"
+    else:
+        label = store.name
+        if store.city and store.city.casefold() not in label.casefold():
+            label = f"{label}, {store.city}"
+    return label[:100]
+
+
 def format_report_receipt(receipt: ReportReceipt) -> str:
     stock = "in stock" if receipt.in_stock else "out of stock"
     observed = _local_time(receipt.observed_at, receipt.store_timezone)

@@ -6,7 +6,11 @@ import discord
 import structlog
 from discord import app_commands
 
-from restock.bot.formatting import PRODUCT_LABELS, RETAILER_LABELS
+from restock.bot.formatting import (
+    PRODUCT_LABELS,
+    RETAILER_LABELS,
+    format_store_autocomplete,
+)
 from restock.db.models import ProductCategory, Retailer
 from restock.services.stores import StoreService
 
@@ -83,7 +87,7 @@ async def autocomplete_stores(
         return []
     return [
         app_commands.Choice(
-            name=f"{store.name} — {store.city} (#{store.id})"[:100],
+            name=format_store_autocomplete(store),
             value=str(store.id),
         )
         for store in stores

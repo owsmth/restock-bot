@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from restock.db.models import RestockRegime, Retailer, Store
@@ -45,18 +45,6 @@ class StoreRepository:
 
     def count_all(self) -> int:
         return int(self._session.scalar(select(func.count()).select_from(Store)) or 0)
-
-    def search_active(self, query: str, *, limit: int = 25) -> list[Store]:
-        normalized = query.strip()
-        statement = select(Store).where(Store.active.is_(True))
-        if normalized:
-            statement = statement.where(
-                or_(
-                    Store.name.icontains(normalized, autoescape=True),
-                    Store.city.icontains(normalized, autoescape=True),
-                )
-            )
-        return list(self._session.scalars(statement.order_by(Store.name).limit(limit)))
 
     def upsert(self, values: StoreWrite) -> tuple[Store, bool]:
         store = self._session.scalar(

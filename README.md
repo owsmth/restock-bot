@@ -187,6 +187,10 @@ CI runs Ruff, mypy, Alembic, and pytest against PostgreSQL 16.
 - Example data cleanup is explicit (`--yes`), removes observations before stores,
   and also removes all `simulator`-source observations. It never removes sources or
   real user reports.
+- Store autocomplete loads the active store set (expected around 100) and ranks in
+  Python because matching spans the retailer, name, city, and address and prefix
+  matches must sort first. It returns at most 25 choices with case-insensitive
+  token matching and truncates each label to Discord's 100-character limit.
 - All slash command responses are ephemeral to avoid publishing unverified reports.
 - Display uses each store's timezone. All bundled stores use `America/New_York`.
 - Reporter IDs are never stored or logged. Only a salted SHA-256 hash is stored.
