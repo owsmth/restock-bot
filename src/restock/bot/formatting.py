@@ -24,6 +24,8 @@ RETAILER_LABELS: dict[Retailer, str] = {
     Retailer.COSTCO: "Costco",
     Retailer.BEST_BUY: "Best Buy",
     Retailer.DOLLAR_GENERAL: "Dollar General",
+    Retailer.FAMILY_DOLLAR: "Family Dollar",
+    Retailer.BARNES_NOBLE: "Barnes & Noble",
     Retailer.WALGREENS: "Walgreens",
     Retailer.CVS: "CVS",
     Retailer.ACE_HARDWARE: "Ace Hardware",

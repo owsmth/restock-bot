@@ -7,7 +7,7 @@ from scripts.seed_stores import DEFAULT_CSV_PATH, SEED_SOURCES, load_seed_rows, 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from restock.db.models import Source, Store
+from restock.db.models import Retailer, Source, Store
 from restock.db.session import SessionFactory
 
 pytestmark = pytest.mark.integration
@@ -46,6 +46,25 @@ def test_seed_is_idempotent(
     assert db_session.scalar(select(func.count()).select_from(Source)) == len(SEED_SOURCES)
     source_names = set(db_session.scalars(select(Source.name)))
     assert source_names == {"discord_report", "simulator", "manual_log"}
+
+
+def test_seed_accepts_new_retailer_values(tmp_path: Path) -> None:
+    csv_path = tmp_path / "new-retailers.csv"
+    csv_path.write_text(
+        "retailer,name,address,city,lat,lng,timezone,restock_regime,active\n"
+        "family_dollar,EXAMPLE Family Dollar,10 Example Retail Way,Cape Coral,"
+        "26.5629,-81.9495,America/New_York,unknown,true\n"
+        "barnes_noble,EXAMPLE Barnes & Noble,11 Example Retail Way,Fort Myers,"
+        "26.6406,-81.8723,America/New_York,unknown,true\n",
+        encoding="utf-8",
+    )
+
+    rows = load_seed_rows(csv_path)
+
+    assert [row.retailer for row in rows] == [
+        Retailer.FAMILY_DOLLAR,
+        Retailer.BARNES_NOBLE,
+    ]
 
 
 def test_seed_rejects_duplicate_identity(tmp_path: Path) -> None:

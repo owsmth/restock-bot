@@ -29,6 +29,8 @@ class Retailer(StrEnum):
     COSTCO = "costco"
     BEST_BUY = "best_buy"
     DOLLAR_GENERAL = "dollar_general"
+    FAMILY_DOLLAR = "family_dollar"
+    BARNES_NOBLE = "barnes_noble"
     WALGREENS = "walgreens"
     CVS = "cvs"
     ACE_HARDWARE = "ace_hardware"
