@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
+from dotenv import load_dotenv
 from sqlalchemy import Engine, text
 from sqlalchemy.orm import Session
 
@@ -17,11 +18,12 @@ from restock.db.session import SessionFactory, create_session_factory
 from restock.repositories.sources import SourceRepository, SourceWrite
 from restock.repositories.stores import StoreRepository, StoreWrite
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(PROJECT_ROOT / ".env", override=False)
 TEST_DATABASE_URL = os.environ.get(
     "RESTOCK_TEST_DATABASE_URL",
     "postgresql+psycopg://restock:restock@localhost:5432/restock_test",
 )
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture(scope="session")

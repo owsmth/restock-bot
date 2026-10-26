@@ -25,11 +25,8 @@ class StoreRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
 
-    def get(self, store_id: int, *, active_only: bool = False) -> Store | None:
-        statement = select(Store).where(Store.id == store_id)
-        if active_only:
-            statement = statement.where(Store.active.is_(True))
-        return self._session.scalar(statement)
+    def get(self, store_id: int) -> Store | None:
+        return self._session.scalar(select(Store).where(Store.id == store_id))
 
     def list_active(self, retailer: Retailer | None = None) -> list[Store]:
         statement = select(Store).where(Store.active.is_(True))

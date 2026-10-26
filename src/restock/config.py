@@ -20,7 +20,6 @@ class Settings(BaseSettings):
     guild_id: int | None = None
     reporter_hash_salt: SecretStr
     log_level: str = "INFO"
-    app_env: str = "development"
     default_timezone: str = "America/New_York"
 
     @field_validator("database_url")

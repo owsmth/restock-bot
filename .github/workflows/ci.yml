@@ -26,7 +26,6 @@ jobs:
       DATABASE_URL: postgresql+psycopg://restock:restock@localhost:5432/restock_test
       RESTOCK_TEST_DATABASE_URL: postgresql+psycopg://restock:restock@localhost:5432/restock_test
       REPORTER_HASH_SALT: ci-only-salt-at-least-sixteen-characters
-      APP_ENV: test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

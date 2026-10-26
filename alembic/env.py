@@ -4,7 +4,6 @@ from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import create_engine, pool
-from sqlalchemy.engine import Connection
 
 from restock.config import get_settings
 from restock.db.models import Base
@@ -44,20 +43,6 @@ def run_migrations_online() -> None:
 
         with context.begin_transaction():
             context.run_migrations()
-
-
-def run_migrations(connection: Connection | None = None) -> None:
-    if connection is None:
-        run_migrations_online()
-        return
-
-    context.configure(
-        connection=connection,
-        target_metadata=target_metadata,
-        compare_type=True,
-    )
-    with context.begin_transaction():
-        context.run_migrations()
 
 
 if context.is_offline_mode():

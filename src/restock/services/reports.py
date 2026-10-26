@@ -161,6 +161,12 @@ class ReportService:
                 raise ReportingUnavailableError()
 
             observation_repository = ObservationRepository(session)
+            observation_repository.lock_report_identity(
+                reporter_hash=reporter_hash,
+                store_id=store.id,
+                product_category=submission.product_category,
+                in_stock=submission.in_stock,
+            )
             if observation_repository.has_recent_duplicate(
                 reporter_hash=reporter_hash,
                 store_id=store.id,

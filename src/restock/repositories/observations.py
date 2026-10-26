@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, text
 from sqlalchemy.orm import Session
 
 from restock.db.models import Observation, ObservationKind, ProductCategory, Source
@@ -70,6 +70,20 @@ class ObservationRepository:
         self._session.add_all(observations)
         self._session.flush()
         return len(observations)
+
+    def lock_report_identity(
+        self,
+        *,
+        reporter_hash: str,
+        store_id: int,
+        product_category: ProductCategory,
+        in_stock: bool,
+    ) -> None:
+        lock_key = f"{reporter_hash}:{store_id}:{product_category.value}:{int(in_stock)}"
+        self._session.execute(
+            text("SELECT pg_advisory_xact_lock(hashtextextended(:lock_key, 0))"),
+            {"lock_key": lock_key},
+        )
 
     def has_recent_duplicate(
         self,
