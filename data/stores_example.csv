@@ -1,7 +1,0 @@
-retailer,name,address,city,lat,lng,timezone,restock_regime,active
-target,EXAMPLE Target Cape Coral,1 Example Retail Way,Cape Coral,26.5629,-81.9495,America/New_York,scheduled,true
-walmart,EXAMPLE Walmart Fort Myers,2 Example Retail Way,Fort Myers,26.6406,-81.8723,America/New_York,random,true
-costco,EXAMPLE Costco Naples,3 Example Retail Way,Naples,26.1423,-81.7948,America/New_York,scheduled,true
-best_buy,EXAMPLE Best Buy Fort Myers,4 Example Retail Way,Fort Myers,26.6406,-81.8723,America/New_York,scheduled,true
-walgreens,EXAMPLE Walgreens Cape Coral,5 Example Retail Way,Cape Coral,26.5629,-81.9495,America/New_York,random,true
-sams_club,EXAMPLE Sams Club Naples,6 Example Retail Way,Naples,26.1423,-81.7948,America/New_York,unknown,true
