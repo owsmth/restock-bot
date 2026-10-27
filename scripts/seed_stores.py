@@ -36,13 +36,6 @@ SEED_SOURCES: tuple[SourceWrite, ...] = (
         ),
     ),
     SourceWrite(
-        name=SourceName.SIMULATOR.value,
-        trust_weight=1.0,
-        compliance_note=(
-            "Synthetic data generated only by scripts/simulate.py; not a real-world observation."
-        ),
-    ),
-    SourceWrite(
         name=SourceName.MANUAL_LOG.value,
         trust_weight=0.9,
         compliance_note=(
