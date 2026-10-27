@@ -27,6 +27,7 @@ and subscriber alerts are intentionally not implemented in this session. The
 
 scripts/seed_stores.py ---> repositories
 scripts/simulate.py ------> simulator (pure generation) -> repositories
+scripts/import_observations_csv.py -> CSV validation -> repositories
 ```
 
 The bot has no SQL and no business logic. The only production write path for user
@@ -39,11 +40,16 @@ reports is `ReportService`. All timestamps are stored in UTC; conversion happens
   observations, and the future prediction cache.
 - Idempotent store/source seeding from `data/stores_seed.csv` (106 Southwest Florida
   stores) plus a separate example set for the simulator.
-- `/report` with validation, hashed reporter IDs, and transaction-safe 30-minute
-  deduplication.
-- `/stores` and `/recent` with store autocomplete and New York time display.
+- `/report` with store outcomes, optional product/quantity/text fields, hashed
+  reporter IDs, and transaction-safe 30-minute deduplication per store and outcome.
+- `/stores` and `/recent` with store autocomplete, outcome labels, and New York time
+  display.
 - Optional anonymous public restock feed for `/report` when a channel is configured.
 - Per-reporter hourly rate limiting plus Manage Server admin commands and `/help`.
+- A `ReportParser` seam and confirmation view for future free-text parsing; no model
+  or external API is bundled yet.
+- An operator-reviewed CSV importer for historical observations with dry-run,
+  store-hint mapping validation, and imported-row isolation.
 - Deterministic simulator with weekly and random-daily planted patterns, reporting
   lag, missed restocks, false negatives, and source-scoped purge.
 - Strict typing, linting, tests, structured JSON logs, and a GitHub Actions workflow.
@@ -79,7 +85,8 @@ only initialized on a fresh Compose volume.
 6. Optional: set `LOCAL_RESTOCK_CHANNEL_ID` to the channel that should receive the
    anonymous restock feed. Give the bot View Channel, Send Messages, and Embed Links
    there. Leave it unset to disable the feed. Set `REPORT_RATE_LIMIT_PER_HOUR` if the
-   default of 10 reports per reporter per hour is not suitable.
+   default of 10 reports per reporter per hour is not suitable. Free-text reports
+   stay disabled unless `REPORT_PARSER_ENABLED=true` and a parser is injected.
 
 Commands are synced only to `GUILD_ID` in `setup_hook`, so changes appear
 immediately. The bot needs no privileged message-content intent. Never commit
@@ -89,18 +96,20 @@ immediately. The bot needs no privileged message-content intent. Never commit
 
 | Command | Behavior |
 | --- | --- |
-| `/report store:<autocomplete> product:<choice> in_stock:<bool> [minutes_ago:0-2880] [note]` | Saves an ephemeral report and confirms privately. If the feed is enabled, also posts an anonymous update. |
+| `/report [store] [outcome:4 choices] [products] [quantity] [text]` | All options are optional. Store and outcome save directly as a dropdown report. Text by itself uses the free-text parser, when enabled, and shows an ephemeral Confirm/Cancel view. If the feed is enabled, saved reports are posted anonymously. |
 | `/stores [retailer]` | Lists active stores and IDs. |
-| `/recent store:<autocomplete> [product]` | Shows the latest 10 reports for a store, including source labels and local times. |
+| `/recent store:<autocomplete> [product]` | Shows the latest 10 reports for a store with `DROP`, `IN STOCK`, `SOLD OUT`, or `NOTHING` labels, source labels, and local times. |
 | `/help` | Ephemeral explanation of `/report`, `/stores`, and `/recent`. |
 | `/admin_delete_report id` | Deletes one report. Manage Server by default; ephemeral. |
 | `/admin_set_store_active store active` | Activates or deactivates a store, including inactive stores in autocomplete. Manage Server by default; ephemeral. |
 
 Store autocomplete matches case-insensitive tokens across retailer, name, city, and
-address, ranks prefix matches first, and shows at most 25 choices. Reports older than
-48 hours, future observations, notes over 280 characters, unknown stores, duplicate
-reports inside 30 minutes, and reporters over their hourly limit receive friendly
-ephemeral errors.
+address, ranks prefix matches first, and shows at most 25 choices. Unknown stores,
+duplicate store/outcome reports inside 30 minutes, notes over 280 characters, quantity
+notes over 200 characters, raw text over 2,000 characters, and reporters over their
+hourly limit receive friendly ephemeral errors. The free-text path is disabled unless
+`REPORT_PARSER_ENABLED=true` and a parser implementation is injected; the bundled bot
+injects `None`.
 
 ## Rate limits and admin commands
 
@@ -116,9 +125,10 @@ include the acting Discord user ID, guild ID, channel ID, or reporter hash.
 ## Public feed (optional)
 
 When `LOCAL_RESTOCK_CHANNEL_ID` is set, every saved report posts a compact embed to
-that channel with the store and city, product, in-stock/out-of-stock styling, and the
-observed time as a Discord relative timestamp. The embed contains no reporter name,
-hash, or mention, and the bot sends it with `allowed_mentions=none`.
+that channel with the store and city, product, one of the exact labels `DROP`,
+`IN STOCK`, `SOLD OUT`, or `NOTHING`, and the observed time as a Discord relative
+timestamp. The embed contains no reporter name, hash, or mention, and the bot sends it
+with `allowed_mentions=none`. Imported CSV rows are never posted to the feed.
 
 If the channel is missing, permissions are wrong, or Discord rejects the post, the
 bot logs a warning and returns the normal private confirmation; the report is never
@@ -213,6 +223,39 @@ under the [Open Database License](https://www.openstreetmap.org/copyright). This
 attribution applies only to rows exported by that script, not to the supplied SWFL
 list. No OSM data is inserted without review.
 
+## CSV import
+
+Historical observations collected outside Discord can be loaded with an
+operator-reviewed CSV. The input columns are `observed_at_et`, `retailer`,
+`store_hint`, `event`, `products`, `note`, `source`, and `confidence`. Dates are
+ISO 8601; values without a timezone are treated as `America/New_York`.
+
+Create a mapping file with `store_hint` and `store_id` columns. The importer
+normalizes hints case-insensitively and whitespace-insensitively:
+
+```csv
+store_hint,store_id
+Target Colonial Blvd,12
+```
+
+Run a dry run first. The command prints row counts and every unmatched hint, and it
+exits nonzero without writing when a hint is unmatched or a row is invalid:
+
+```bash
+python scripts/import_observations_csv.py \
+  --csv data/observations.csv \
+  --mapping data/store_mapping.csv \
+  --dry-run
+```
+
+Remove `--dry-run` to write the rows. Event mapping is `restock -> just_dropped`,
+`in_stock -> in_stock`, `out_of_stock -> sold_out`, and `none -> nothing_here`.
+`schedule_info` rows and rows with a blank date are skipped and counted. Imported rows
+use `report_source=imported`, are stored under `csv:<source>` sources with the row's
+confidence as the source trust weight, never appear in `/recent` or the public feed,
+and never count toward Discord rate limits. The `products` column is mapped to the
+primary product category; the original values remain in the row's `raw_text`.
+
 ## Cleanup example data
 
 The default seed file now contains real stores. If a development database still has
@@ -239,18 +282,25 @@ mypy src tests scripts
 
 Tests use a real PostgreSQL database, not mocks. They read
 `RESTOCK_TEST_DATABASE_URL` from the environment or `.env` and apply Alembic
-migrations automatically. Service tests cover validation, hashing, deduplication,
-rate limiting, recent-report queries, admin deletion/store activation, simulator
-persistence, and source-scoped purge. Bot behavior is tested at the command
-parsing/formatting + service seam, never by connecting to Discord.
+migrations automatically. Service tests cover outcome validation, hashing,
+store/outcome deduplication, rate limiting, recent-report queries, sold-out timing
+across the New York midnight boundary, the free-text confirmation save path, CSV
+import mapping and isolation, admin deletion/store activation, simulator persistence,
+and source-scoped purge. Bot behavior is tested at the command parsing/formatting +
+service seam, never by connecting to Discord.
 
 CI runs Ruff, mypy, Alembic, and pytest against PostgreSQL 16.
 
 ## Decisions
 
-- Deduplication is keyed by reporter hash, store, category, and `in_stock`, using
-  `reported_at`. A transaction-scoped PostgreSQL advisory lock serializes the check
-  so simultaneous identical submissions cannot both pass.
+- Deduplication is keyed by reporter hash, store, and outcome, using `reported_at`.
+  A transaction-scoped PostgreSQL advisory lock serializes the check so simultaneous
+  identical submissions cannot both pass. Product and quantity changes do not bypass
+  the window.
+- Reports store one of four outcomes: `just_dropped`, `in_stock`, `sold_out`, or
+  `nothing_here`. The legacy `in_stock` boolean is derived from the outcome for
+  compatibility. The `products` option maps to the existing primary product category;
+  `quantity_note` and `raw_text` preserve the optional detail.
 - Seed upserts use `(retailer, name, address)` as the natural key. Duplicate rows
   are rejected before the database is opened, with line numbers in the error.
 - The primary store list is the operator-supplied SWFL workbook. It contains names
@@ -271,8 +321,18 @@ CI runs Ruff, mypy, Alembic, and pytest against PostgreSQL 16.
 - The public feed is opt-in through `LOCAL_RESTOCK_CHANNEL_ID`. The report service
   returns the announcement data (including store city), while a bot-layer notifier
   builds and posts the embed. Posting failures log a warning and return `False`; they
-  never roll back the saved report. The embed has no reporter identity, uses
+  never roll back the saved report. The embed has no reporter identity, uses the exact
+  `DROP`, `IN STOCK`, `SOLD OUT`, or `NOTHING` label, sends with
   `allowed_mentions=none`, and renders observed time as a relative timestamp.
+- Free-text parsing is behind `REPORT_PARSER_ENABLED` and dependency injection. The
+  bundled `build_bot` injects `None`, so free text stays off until a `ReportParser`
+  implementation exists. The confirmation view saves through the same report service
+  with `report_source=freetext`; it never bypasses validation, deduplication, or rate
+  limits.
+- CSV imports use a user-edited `store_hint` to store ID mapping and refuse to write
+  if any hint is unmatched. Imported rows are tagged `report_source=imported`, use
+  `csv:<source>` source names, and are excluded from `/recent` and the feed. Because
+  they bypass the Discord report service, they never consume a reporter's rate limit.
 - Rate limiting is a rolling hour per `reporter_hash`, defaulting to 10 and configurable
   with `REPORT_RATE_LIMIT_PER_HOUR`. A reporter-level advisory lock counts accepted
   Discord reports before insert, so concurrent submissions cannot bypass it.
@@ -292,7 +352,9 @@ CI runs Ruff, mypy, Alembic, and pytest against PostgreSQL 16.
 
 - No prediction windows, backtest, `/predict`, subscriptions, or nightly worker yet.
 - No scraping, LLM/agent layer, auto-purchasing, Facebook ingestion, or third-party
-  Discord ingestion.
+  Discord ingestion. The free-text parser is a typed seam only; no model is bundled.
+- CSV import is manual and operator-reviewed. The mapping file must be edited by hand,
+  and the `products` column is reduced to one primary product category for storage.
 - Simulator patterns are tied to the example store names and only cover six stores.
 - Crowdsourced reports are unverified. Source trust weights are stored but are not
   yet applied to predictions.
