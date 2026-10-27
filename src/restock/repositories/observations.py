@@ -7,13 +7,27 @@ from datetime import datetime
 from sqlalchemy import delete, func, select, text
 from sqlalchemy.orm import Session
 
-from restock.db.models import Observation, ObservationKind, ProductCategory, Source
+from restock.db.models import (
+    Observation,
+    ObservationKind,
+    ProductCategory,
+    ReportOutcome,
+    ReportSource,
+    Source,
+)
 
 
 @dataclass(frozen=True, slots=True)
 class ObservationRecord:
     observation: Observation
     source_name: str
+
+
+@dataclass(frozen=True, slots=True)
+class OutcomeObservation:
+    store_id: int
+    outcome: ReportOutcome
+    observed_at: datetime
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,8 +40,12 @@ class ObservationWrite:
     reported_at: datetime
     source_id: int
     reporter_hash: str | None
+    outcome: ReportOutcome | None = None
     quantity_estimate: int | None = None
+    quantity_note: str | None = None
+    raw_text: str | None = None
     notes: str | None = None
+    report_source: ReportSource = ReportSource.DROPDOWN
 
 
 class ObservationRepository:
@@ -40,12 +58,16 @@ class ObservationRepository:
             store_id=values.store_id,
             product_category=values.product_category,
             in_stock=values.in_stock,
+            outcome=values.outcome,
             observed_at=values.observed_at,
             reported_at=values.reported_at,
             source_id=values.source_id,
             reporter_hash=values.reporter_hash,
             quantity_estimate=values.quantity_estimate,
+            quantity_note=values.quantity_note,
+            raw_text=values.raw_text,
             notes=values.notes,
+            report_source=values.report_source,
         )
         self._session.add(observation)
         self._session.flush()
@@ -61,12 +83,16 @@ class ObservationRepository:
                 store_id=item.store_id,
                 product_category=item.product_category,
                 in_stock=item.in_stock,
+                outcome=item.outcome,
                 observed_at=item.observed_at,
                 reported_at=item.reported_at,
                 source_id=item.source_id,
                 reporter_hash=item.reporter_hash,
                 quantity_estimate=item.quantity_estimate,
+                quantity_note=item.quantity_note,
+                raw_text=item.raw_text,
                 notes=item.notes,
+                report_source=item.report_source,
             )
             for item in values
         ]
@@ -79,10 +105,9 @@ class ObservationRepository:
         *,
         reporter_hash: str,
         store_id: int,
-        product_category: ProductCategory,
-        in_stock: bool,
+        outcome: ReportOutcome,
     ) -> None:
-        lock_key = f"{reporter_hash}:{store_id}:{product_category.value}:{int(in_stock)}"
+        lock_key = f"{reporter_hash}:{store_id}:{outcome.value}"
         self._session.execute(
             text("SELECT pg_advisory_xact_lock(hashtextextended(:lock_key, 0))"),
             {"lock_key": lock_key},
@@ -119,8 +144,7 @@ class ObservationRepository:
         *,
         reporter_hash: str,
         store_id: int,
-        product_category: ProductCategory,
-        in_stock: bool,
+        outcome: ReportOutcome,
         submitted_since: datetime,
     ) -> bool:
         statement = (
@@ -128,8 +152,7 @@ class ObservationRepository:
             .where(
                 Observation.reporter_hash == reporter_hash,
                 Observation.store_id == store_id,
-                Observation.product_category == product_category,
-                Observation.in_stock.is_(in_stock),
+                Observation.outcome == outcome,
                 Observation.reported_at >= submitted_since,
             )
             .limit(1)
@@ -146,7 +169,10 @@ class ObservationRepository:
         statement = (
             select(Observation, Source.name)
             .join(Source, Source.id == Observation.source_id)
-            .where(Observation.store_id == store_id)
+            .where(
+                Observation.store_id == store_id,
+                Observation.report_source != ReportSource.IMPORTED,
+            )
         )
         if product_category is not None:
             statement = statement.where(Observation.product_category == product_category)
@@ -157,6 +183,33 @@ class ObservationRepository:
         return [
             ObservationRecord(observation=observation, source_name=source_name)
             for observation, source_name in self._session.execute(statement)
+        ]
+
+    def list_outcomes(
+        self,
+        *,
+        store_id: int,
+        start: datetime,
+        end: datetime,
+    ) -> list[OutcomeObservation]:
+        statement = (
+            select(Observation.store_id, Observation.outcome, Observation.observed_at)
+            .where(
+                Observation.store_id == store_id,
+                Observation.outcome.in_([ReportOutcome.JUST_DROPPED, ReportOutcome.SOLD_OUT]),
+                Observation.observed_at >= start,
+                Observation.observed_at < end,
+            )
+            .order_by(Observation.observed_at, Observation.id)
+        )
+        return [
+            OutcomeObservation(
+                store_id=row.store_id,
+                outcome=row.outcome,
+                observed_at=row.observed_at,
+            )
+            for row in self._session.execute(statement)
+            if row.outcome is not None
         ]
 
     def count_all(self) -> int:

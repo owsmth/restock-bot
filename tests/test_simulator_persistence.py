@@ -9,7 +9,13 @@ from scripts.simulate import purge_simulator, run_simulation
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from restock.db.models import Observation, ProductCategory, Source, SourceName
+from restock.db.models import (
+    Observation,
+    ProductCategory,
+    ReportOutcome,
+    Source,
+    SourceName,
+)
 from restock.db.session import SessionFactory
 from restock.repositories.sources import SourceRepository
 from restock.repositories.stores import StoreRepository
@@ -37,7 +43,7 @@ def test_simulation_persists_labeled_rows_and_purge_is_scoped(
         reporter_id=1,
         store_id=target_id,
         product_category=ProductCategory.ETB,
-        in_stock=True,
+        outcome=ReportOutcome.IN_STOCK,
     )
 
     result = run_simulation(
@@ -63,6 +69,7 @@ def test_simulation_persists_labeled_rows_and_purge_is_scoped(
     assert sample_simulator_row is not None
     assert sample_simulator_row.notes is not None
     assert sample_simulator_row.notes.startswith("SIMULATOR:")
+    assert sample_simulator_row.outcome is not None
 
     deleted = purge_simulator(session_factory)
     assert deleted == len(result.observations)

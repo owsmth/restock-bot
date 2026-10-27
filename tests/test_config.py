@@ -16,6 +16,7 @@ def make_settings(
     discord_token: SecretStr | None = None,
     local_restock_channel_id: int | None = None,
     report_rate_limit_per_hour: int = 10,
+    report_parser_enabled: bool = False,
 ) -> Settings:
     return Settings(
         _env_file=None,
@@ -26,6 +27,7 @@ def make_settings(
         discord_token=discord_token,
         local_restock_channel_id=local_restock_channel_id,
         report_rate_limit_per_hour=report_rate_limit_per_hour,
+        report_parser_enabled=report_parser_enabled,
     )
 
 
@@ -61,6 +63,11 @@ def test_settings_rate_limit_defaults_and_validates() -> None:
     assert make_settings(report_rate_limit_per_hour=3).report_rate_limit_per_hour == 3
     with pytest.raises(ValidationError):
         make_settings(report_rate_limit_per_hour=0)
+
+
+def test_report_parser_is_disabled_by_default() -> None:
+    assert make_settings().report_parser_enabled is False
+    assert make_settings(report_parser_enabled=True).report_parser_enabled is True
 
 
 def test_secrets_are_not_exposed_in_repr() -> None:

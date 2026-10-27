@@ -66,6 +66,19 @@ class SourceName(StrEnum):
     MANUAL_LOG = "manual_log"
 
 
+class ReportOutcome(StrEnum):
+    JUST_DROPPED = "just_dropped"
+    IN_STOCK = "in_stock"
+    SOLD_OUT = "sold_out"
+    NOTHING_HERE = "nothing_here"
+
+
+class ReportSource(StrEnum):
+    DROPDOWN = "dropdown"
+    FREETEXT = "freetext"
+    IMPORTED = "imported"
+
+
 def _enum_values(enum_type: type[StrEnum]) -> list[str]:
     return [member.value for member in enum_type]
 
@@ -84,6 +97,16 @@ observation_kind_enum = Enum(
 product_category_enum = Enum(
     ProductCategory,
     name="product_category",
+    values_callable=_enum_values,
+)
+report_outcome_enum = Enum(
+    ReportOutcome,
+    name="report_outcome",
+    values_callable=_enum_values,
+)
+report_source_enum = Enum(
+    ReportSource,
+    name="report_source",
     values_callable=_enum_values,
 )
 
@@ -165,9 +188,14 @@ class Observation(Base):
             "ix_observations_dedup",
             "reporter_hash",
             "store_id",
-            "product_category",
-            "in_stock",
+            "outcome",
             "reported_at",
+        ),
+        Index(
+            "ix_observations_store_outcome_observed_at",
+            "store_id",
+            "outcome",
+            "observed_at",
         ),
     )
 
@@ -188,6 +216,10 @@ class Observation(Base):
         nullable=False,
     )
     in_stock: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    outcome: Mapped[ReportOutcome | None] = mapped_column(
+        report_outcome_enum,
+        nullable=True,
+    )
     observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     reported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     source_id: Mapped[int] = mapped_column(
@@ -197,7 +229,15 @@ class Observation(Base):
     )
     reporter_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     quantity_estimate: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    quantity_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    raw_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     notes: Mapped[str | None] = mapped_column(String(280), nullable=True)
+    report_source: Mapped[ReportSource] = mapped_column(
+        report_source_enum,
+        nullable=False,
+        default=ReportSource.DROPDOWN,
+        server_default=ReportSource.DROPDOWN.value,
+    )
 
 
 class Prediction(Base):

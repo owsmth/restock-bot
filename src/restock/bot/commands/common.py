@@ -7,15 +7,20 @@ import structlog
 from discord import app_commands
 
 from restock.bot.formatting import (
+    OUTCOME_LABELS,
     PRODUCT_LABELS,
     RETAILER_LABELS,
     format_store_autocomplete,
 )
-from restock.db.models import ProductCategory, Retailer
+from restock.db.models import ProductCategory, ReportOutcome, Retailer
 from restock.services.stores import StoreService, StoreSummary
 
 logger = structlog.get_logger(__name__)
 
+OUTCOME_CHOICES = [
+    app_commands.Choice(name=label, value=outcome.value)
+    for outcome, label in OUTCOME_LABELS.items()
+]
 PRODUCT_CHOICES = [
     app_commands.Choice(name=label, value=category.value)
     for category, label in PRODUCT_LABELS.items()
@@ -47,6 +52,13 @@ def parse_product(value: str) -> ProductCategory:
         return ProductCategory(value)
     except ValueError as exc:
         raise CommandInputError("Choose a product from the command options.") from exc
+
+
+def parse_outcome(value: str) -> ReportOutcome:
+    try:
+        return ReportOutcome(value)
+    except ValueError as exc:
+        raise CommandInputError("Choose an outcome from the command options.") from exc
 
 
 def parse_retailer(value: str | None) -> Retailer | None:

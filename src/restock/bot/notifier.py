@@ -5,24 +5,26 @@ from typing import cast
 import discord
 import structlog
 
-from restock.bot.formatting import product_label
+from restock.bot.formatting import outcome_label, product_label
+from restock.db.models import ReportOutcome
 from restock.services.reports import ReportReceipt
 
 logger = structlog.get_logger(__name__)
 
+_OUTCOME_COLORS = {
+    ReportOutcome.JUST_DROPPED: discord.Color.orange(),
+    ReportOutcome.IN_STOCK: discord.Color.green(),
+    ReportOutcome.SOLD_OUT: discord.Color.red(),
+    ReportOutcome.NOTHING_HERE: discord.Color(0x607D8B),
+}
+
 
 def build_report_announcement(receipt: ReportReceipt) -> discord.Embed:
-    if receipt.in_stock:
-        stock = "✅ In stock"
-        color = discord.Color.green()
-    else:
-        stock = "❌ Out of stock"
-        color = discord.Color.red()
-
+    label = outcome_label(receipt.outcome)
     embed = discord.Embed(
-        title=f"{stock} · {receipt.store_name}"[:256],
+        title=f"{label} · {receipt.store_name}"[:256],
         description=f"{receipt.store_city} · {product_label(receipt.product_category)}",
-        color=color,
+        color=_OUTCOME_COLORS[receipt.outcome],
     )
     timestamp = int(receipt.observed_at.timestamp())
     embed.add_field(name="Observed", value=f"<t:{timestamp}:R>", inline=True)

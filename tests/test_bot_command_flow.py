@@ -6,12 +6,13 @@ import pytest
 
 from restock.bot.commands.common import (
     CommandInputError,
+    parse_outcome,
     parse_product,
     parse_retailer,
     parse_store_id,
 )
 from restock.bot.formatting import format_recent, format_report_receipt, format_store
-from restock.db.models import ProductCategory, Retailer
+from restock.db.models import ProductCategory, ReportOutcome, Retailer
 from restock.db.session import SessionFactory
 from restock.services.reports import ReportService
 from restock.services.stores import StoreService
@@ -22,6 +23,7 @@ pytestmark = pytest.mark.integration
 def test_parse_helpers_reject_bad_values_and_accept_choices() -> None:
     assert parse_store_id("42") == 42
     assert parse_product("etb") is ProductCategory.ETB
+    assert parse_outcome("sold_out") is ReportOutcome.SOLD_OUT
     assert parse_retailer("target") is Retailer.TARGET
     assert parse_retailer(None) is None
 
@@ -29,6 +31,8 @@ def test_parse_helpers_reject_bad_values_and_accept_choices() -> None:
         parse_store_id("not-a-store")
     with pytest.raises(CommandInputError, match="product"):
         parse_product("not-a-product")
+    with pytest.raises(CommandInputError, match="outcome"):
+        parse_outcome("not-an-outcome")
     with pytest.raises(CommandInputError, match="retailer"):
         parse_retailer("not-a-retailer")
 
@@ -53,12 +57,13 @@ def test_report_and_recent_command_flow(
         reporter_id=123,
         store_id=store_id,
         product_category=category,
-        in_stock=True,
+        outcome=ReportOutcome.IN_STOCK,
         minutes_ago=0,
         note="Command-flow test",
     )
     confirmation = format_report_receipt(receipt)
     assert "Report `#1`" in confirmation
+    assert "IN STOCK" in confirmation
     assert "Nothing was posted publicly" in confirmation
 
     stores = store_service.list_active()

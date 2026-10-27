@@ -46,6 +46,16 @@ def test_setup_hook_copies_global_commands_into_guild_sync(
         for command in bot.tree.get_commands(guild=discord.Object(id=GUILD_ID))
         if isinstance(command, discord.app_commands.Command)
     }
+    report_command = commands["report"]
+    assert [parameter.name for parameter in report_command.parameters] == [
+        "store",
+        "outcome",
+        "products",
+        "quantity",
+        "text",
+    ]
+    assert all(not parameter.required for parameter in report_command.parameters)
+
     delete_command = commands["admin_delete_report"]
     assert delete_command.default_permissions == discord.Permissions(manage_guild=True)
     assert [parameter.name for parameter in delete_command.parameters] == ["report_id"]

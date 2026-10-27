@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     guild_id: int | None = None
     local_restock_channel_id: int | None = Field(default=None, gt=0)
     report_rate_limit_per_hour: int = Field(default=10, gt=0)
+    report_parser_enabled: bool = False
     reporter_hash_salt: SecretStr
     log_level: str = "INFO"
     default_timezone: str = "America/New_York"
