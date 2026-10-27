@@ -33,6 +33,8 @@ def build_bot(settings: Settings) -> tuple[RestockBot, Engine]:
         ),
         store_service=StoreService(session_factory),
         local_restock_channel_id=settings.local_restock_channel_id,
+        report_parser=None,
+        report_parser_enabled=settings.report_parser_enabled,
     )
     return bot, engine
 

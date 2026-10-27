@@ -10,6 +10,7 @@ from restock.bot.commands.help import HelpCommands
 from restock.bot.commands.reports import ReportCommands
 from restock.bot.commands.stores import StoreCommands
 from restock.bot.notifier import ReportNotifier
+from restock.services.report_parser import ReportParser
 from restock.services.reports import ReportService
 from restock.services.stores import StoreService
 
@@ -24,6 +25,8 @@ class RestockBot(commands.Bot):
         report_service: ReportService,
         store_service: StoreService,
         local_restock_channel_id: int | None = None,
+        report_parser: ReportParser | None = None,
+        report_parser_enabled: bool = False,
     ) -> None:
         super().__init__(
             command_prefix=commands.when_mentioned,
@@ -35,6 +38,8 @@ class RestockBot(commands.Bot):
         self.report_service = report_service
         self.store_service = store_service
         self.local_restock_channel_id = local_restock_channel_id
+        self.report_parser = report_parser
+        self.report_parser_enabled = report_parser_enabled
         self.report_notifier = ReportNotifier(self, local_restock_channel_id)
 
     async def setup_hook(self) -> None:
