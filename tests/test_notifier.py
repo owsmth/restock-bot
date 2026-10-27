@@ -7,31 +7,33 @@ from unittest.mock import AsyncMock, MagicMock
 import discord
 
 from restock.bot.notifier import ReportNotifier, build_report_announcement
-from restock.db.models import ProductCategory
+from restock.db.models import ProductCategory, ReportOutcome
 from restock.services.reports import ReportReceipt
 
 OBSERVED_AT = datetime(2026, 10, 26, 15, 0, tzinfo=UTC)
 
 
-def _receipt(*, in_stock: bool = True) -> ReportReceipt:
+def _receipt(*, outcome: ReportOutcome = ReportOutcome.IN_STOCK) -> ReportReceipt:
     return ReportReceipt(
         observation_id=42,
         store_name="Target - Colonial Blvd",
         store_city="Fort Myers",
         store_timezone="America/New_York",
         product_category=ProductCategory.ETB,
-        in_stock=in_stock,
+        outcome=outcome,
         observed_at=OBSERVED_AT,
         reported_at=OBSERVED_AT,
     )
 
 
-def test_announcement_embed_has_required_content_and_distinct_stock_styles() -> None:
-    in_stock = build_report_announcement(_receipt(in_stock=True))
-    out_of_stock = build_report_announcement(_receipt(in_stock=False))
+def test_announcement_embed_has_required_content_and_distinct_outcome_styles() -> None:
+    in_stock = build_report_announcement(_receipt(outcome=ReportOutcome.IN_STOCK))
+    sold_out = build_report_announcement(_receipt(outcome=ReportOutcome.SOLD_OUT))
+    dropped = build_report_announcement(_receipt(outcome=ReportOutcome.JUST_DROPPED))
+    nothing = build_report_announcement(_receipt(outcome=ReportOutcome.NOTHING_HERE))
 
     assert in_stock.title is not None
-    assert "In stock" in in_stock.title
+    assert "IN STOCK" in in_stock.title
     assert "Target - Colonial Blvd" in in_stock.title
     assert in_stock.description is not None
     assert "Fort Myers" in in_stock.description
@@ -40,9 +42,15 @@ def test_announcement_embed_has_required_content_and_distinct_stock_styles() -> 
     assert in_stock.fields[0].name == "Observed"
     assert in_stock.fields[0].value == f"<t:{int(OBSERVED_AT.timestamp())}:R>"
 
-    assert out_of_stock.title is not None
-    assert "Out of stock" in out_of_stock.title
-    assert out_of_stock.color == discord.Color.red()
+    assert sold_out.title is not None
+    assert "SOLD OUT" in sold_out.title
+    assert sold_out.color == discord.Color.red()
+    assert dropped.title is not None
+    assert "DROP" in dropped.title
+    assert dropped.color == discord.Color.orange()
+    assert nothing.title is not None
+    assert "NOTHING" in nothing.title
+    assert nothing.color == discord.Color(0x607D8B)
 
 
 def test_announcement_posts_with_mentions_disabled() -> None:

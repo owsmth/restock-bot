@@ -3,9 +3,17 @@ from __future__ import annotations
 from datetime import UTC, datetime, tzinfo
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from restock.db.models import ProductCategory, Retailer, SourceName
+from restock.db.models import ProductCategory, ReportOutcome, Retailer, SourceName
+from restock.services.report_parser import ParsedReport
 from restock.services.reports import RecentReports, ReportReceipt
 from restock.services.stores import StoreSummary
+
+OUTCOME_LABELS: dict[ReportOutcome, str] = {
+    ReportOutcome.JUST_DROPPED: "DROP",
+    ReportOutcome.IN_STOCK: "IN STOCK",
+    ReportOutcome.SOLD_OUT: "SOLD OUT",
+    ReportOutcome.NOTHING_HERE: "NOTHING",
+}
 
 PRODUCT_LABELS: dict[ProductCategory, str] = {
     ProductCategory.BOOSTER_BOX: "Booster box",
@@ -44,6 +52,16 @@ def retailer_label(retailer: Retailer) -> str:
     return RETAILER_LABELS[retailer]
 
 
+def outcome_label(outcome: ReportOutcome | None, *, in_stock: bool | None = None) -> str:
+    if outcome is not None:
+        return OUTCOME_LABELS[outcome]
+    if in_stock is True:
+        return OUTCOME_LABELS[ReportOutcome.IN_STOCK]
+    if in_stock is False:
+        return OUTCOME_LABELS[ReportOutcome.SOLD_OUT]
+    return "UNKNOWN"
+
+
 def format_store(stores: list[StoreSummary]) -> str:
     if not stores:
         return "No active stores are configured yet. Ask an operator to run the seed script."
@@ -73,8 +91,8 @@ def format_store_autocomplete(store: StoreSummary) -> str:
 def format_help() -> str:
     return (
         "**Restock bot help**\n"
-        "`/report` — save what you saw at a store: product, in/out of stock, "
-        "and optional minutes ago.\n"
+        "`/report` — save a store outcome: just dropped, in stock, sold out, or "
+        "nothing there. You can add a product, quantity, or text.\n"
         "`/stores` — list active stores. Store autocomplete searches retailer, "
         "name, city, and address.\n"
         "`/recent` — show the latest reports for a store.\n"
@@ -88,17 +106,18 @@ def format_report_receipt(
     *,
     announced_publicly: bool = False,
 ) -> str:
-    stock = "in stock" if receipt.in_stock else "out of stock"
     observed = _local_time(receipt.observed_at, receipt.store_timezone)
     public_line = (
         "_This report was also shared to the community feed without your identity._"
         if announced_publicly
         else "_Nothing was posted publicly._"
     )
+    quantity = f" · qty: {receipt.quantity_note}" if receipt.quantity_note else ""
     return _fit(
-        f"✅ Report `#{receipt.observation_id}` saved for "
+        f"Report `#{receipt.observation_id}` saved for "
         f"**{receipt.store_name}**.\n"
-        f"{product_label(receipt.product_category)} · **{stock}** · "
+        f"**{outcome_label(receipt.outcome)}** · "
+        f"{product_label(receipt.product_category)}{quantity} · "
         f"observed {observed}.\n"
         f"{public_line}"
     )
@@ -110,19 +129,38 @@ def format_recent(reports: RecentReports) -> str:
     title = f"**Recent reports — {reports.store_name}**"
     lines = [title]
     for report in reports.reports:
-        stock = "✅ in stock" if report.in_stock else "❌ out of stock"
         observed = _local_time(report.observed_at, reports.store_timezone)
         source = _format_source(report.source_name)
-        line = f"`{observed}` {stock} · {product_label(report.product_category)} · source: {source}"
+        quantity = f" · qty: {report.quantity_note}" if report.quantity_note else ""
+        label = outcome_label(report.outcome, in_stock=report.in_stock)
+        line = (
+            f"`{observed}` **{label}** · {product_label(report.product_category)}"
+            f"{quantity} · source: {source}"
+        )
         if report.notes:
             line += f"\n> {report.notes}"
         lines.append(line)
     return _fit("\n".join(lines))
 
 
+def format_parsed_report(parsed: ParsedReport, store_name: str) -> str:
+    lines = [
+        "**Confirm free-text report**",
+        f"Store: **{store_name}**",
+        f"Outcome: **{outcome_label(parsed.outcome)}**",
+    ]
+    if parsed.products is not None:
+        lines.append(f"Product: {product_label(parsed.products)}")
+    if parsed.quantity_note:
+        lines.append(f"Quantity: {parsed.quantity_note}")
+    lines.append(f"Confidence: {parsed.confidence:.2f}")
+    lines.append("Confirm to save this report.")
+    return _fit("\n".join(lines))
+
+
 def _format_source(source_name: str) -> str:
     if source_name == SourceName.SIMULATOR.value:
-        return "🧪 SIMULATOR"
+        return "SIMULATOR"
     if source_name == SourceName.DISCORD_REPORT.value:
         return "Discord report"
     if source_name == SourceName.MANUAL_LOG.value:
