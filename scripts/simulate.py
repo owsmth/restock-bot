@@ -10,7 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from restock.config import get_settings
 from restock.db.engine import create_db_engine
-from restock.db.models import ObservationKind, SourceName
+from restock.db.models import ObservationKind, ReportOutcome, SourceName
 from restock.db.session import SessionFactory, create_session_factory, session_scope
 from restock.logging import configure_logging
 from restock.repositories.observations import ObservationRepository, ObservationWrite
@@ -58,6 +58,9 @@ def run_simulation(
                 store_id=store_ids[observation.store_name],
                 product_category=observation.product_category,
                 in_stock=observation.in_stock,
+                outcome=(
+                    ReportOutcome.IN_STOCK if observation.in_stock else ReportOutcome.SOLD_OUT
+                ),
                 observed_at=observation.observed_at,
                 reported_at=observation.reported_at,
                 source_id=source.id,

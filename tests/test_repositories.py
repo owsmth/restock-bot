@@ -10,6 +10,7 @@ from restock.db.models import (
     Observation,
     ObservationKind,
     ProductCategory,
+    ReportOutcome,
     RestockRegime,
     Retailer,
     Store,
@@ -134,6 +135,7 @@ def test_observation_duplicate_lookup(db_session: Session) -> None:
             store_id=store.id,
             product_category=ProductCategory.ETB,
             in_stock=True,
+            outcome=ReportOutcome.IN_STOCK,
             observed_at=now - timedelta(minutes=10),
             reported_at=now,
             source_id=source.id,
@@ -145,22 +147,19 @@ def test_observation_duplicate_lookup(db_session: Session) -> None:
     assert repository.has_recent_duplicate(
         reporter_hash=reporter_hash,
         store_id=store.id,
-        product_category=ProductCategory.ETB,
-        in_stock=True,
+        outcome=ReportOutcome.IN_STOCK,
         submitted_since=now - timedelta(minutes=30),
     )
     assert not repository.has_recent_duplicate(
         reporter_hash=reporter_hash,
         store_id=store.id,
-        product_category=ProductCategory.ETB,
-        in_stock=False,
+        outcome=ReportOutcome.SOLD_OUT,
         submitted_since=now - timedelta(minutes=30),
     )
     assert not repository.has_recent_duplicate(
         reporter_hash=reporter_hash,
         store_id=store.id,
-        product_category=ProductCategory.ETB,
-        in_stock=True,
+        outcome=ReportOutcome.IN_STOCK,
         submitted_since=now + timedelta(seconds=1),
     )
 
