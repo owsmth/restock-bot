@@ -105,11 +105,10 @@ immediately. The bot needs no privileged message-content intent. Never commit
 
 Store autocomplete matches case-insensitive tokens across retailer, name, city, and
 address, ranks prefix matches first, and shows at most 25 choices. Unknown stores,
-duplicate store/outcome reports inside 30 minutes, notes over 280 characters, quantity
-notes over 200 characters, raw text over 2,000 characters, and reporters over their
-hourly limit receive friendly ephemeral errors. The free-text path is disabled unless
-`REPORT_PARSER_ENABLED=true` and a parser implementation is injected; the bundled bot
-injects `None`.
+duplicate store/outcome reports inside 30 minutes, quantity notes over 200 characters,
+raw text over 2,000 characters, and reporters over their hourly limit receive friendly
+ephemeral errors. The free-text path is disabled unless `REPORT_PARSER_ENABLED=true`
+and a parser implementation is injected; the bundled bot injects `None`.
 
 ## Rate limits and admin commands
 
